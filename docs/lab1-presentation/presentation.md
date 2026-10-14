@@ -27,146 +27,220 @@ Notatki:
 
 ---
 
-# Problem: Czarna skrzynka w głębokim uczeniu
+# Problem: sieć neuronowa nie wyjaśnia swoich decyzji
 
-- Modele osiągają wysoką trafność, lecz ich proces decyzyjny jest niejawny (*Black-Box*).
-- Tradycyjne mapy atrybucji (Saliency) wskazują jedynie *piksele*, a nie *pojęcia semantyczne*.
+Sieć neuronowa rozpoznaje gatunek ptaka na zdjęciu z dużą dokładnością, ale nie potrafi wyjaśnić, dlaczego wybrała właśnie ten gatunek.
 
-<div class="img-center">
+Decyzja wynika z działania milionów parametrów w kolejnych warstwach sieci. Pojedynczy neuron często reaguje na kilka niepowiązanych rzeczy, więc nie da się mu przypisać jednej cechy, którą człowiek mógłby nazwać.
 
-![width:840px](img/slajd02_black_box.png)
+Z zewnątrz widzimy tylko wynik. Nie wiemy, czy sieć patrzy na ptaka, czy na przypadkowy szczegół, na przykład tło zdjęcia.
 
+<div class="flow">
+  <div class="flow-box"><span class="flow-label">Wejście</span>Zdjęcie ptaka</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Sieć neuronowa</span>Miliony parametrów w ukrytych warstwach</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Wyjście</span>Hooded Warbler</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box flow-box-open"><span class="flow-label">Problem</span>Brak odpowiedzi, skąd wziął się wynik</div>
 </div>
-
-<!--
-Notatki:
-- Black-Box: wejście piksele -> 512 ukrytych floatów -> predykcja (brak "dlaczego?")
-- Zastosowania krytyczne: medycyna, diagnostyka, finanse
-- Saliency maps / Grad-CAM: podświetlają piksele, a nie pojęcia (dziób, skrzydło, tło)
--->
 
 ---
 
-# Wcześniejsze rozwiązanie: Concept Bottleneck Models (CBM)
+# Dlaczego wyjaśnialność ma znaczenie
 
-- **Wyjaśnialność *ante-hoc***: wymuszenie warstwy pojęć pośrednich ($Obraz \to Pojęcia \to Klasa$).
-- **Klasyfikator liniowy** podejmuje decyzję wyłącznie na podstawie obecności jawnych cech.
+**Zaufanie w zastosowaniach krytycznych.** Paper wymienia opiekę zdrowotną, autonomiczne samochody i obronność jako dziedziny, w których model musi być przejrzysty, a nie tylko dokładny.
 
-<div class="img-center">
+**Wykrywanie błędnych powodów.** Sieć może dać poprawny wynik z niewłaściwego powodu, na przykład rozpoznać ptaka po tle. Bez wyjaśnienia nikt tego nie zauważy.
 
-![width:880px](img/slajd03_cbm_schemat.png)
+**Poprawianie błędów.** W paperze wyzerowanie jednego pojęcia zmieniło błędną diagnozę znamienia na poprawną. Gdy wiemy, która cecha zawiodła, możemy ją sprawdzić.
 
-</div>
-
-<!--
-Notatki:
-- Idea CBM: wymuszona warstwa pośrednia z pojęciami (żółta głowa, czarna maska)
-- Wyjaśnialność ante-hoc: klasyfikator liniowy decyduje wyłącznie z cech
-- Podejście klasyczne: cechy narzucane z góry (ekspert, LLM, CLIP)
--->
+**Odpowiedzialność za decyzję.** Osoba korzystająca z wyniku, na przykład lekarz, musi umieć go uzasadnić przed pacjentem.
 
 ---
 
-<!-- _class: two-columns -->
+# Dwa sposoby wyjaśniania decyzji sieci
 
-# Co jest nie tak z tradycyjnym CBM?
+Metody wyjaśniania dzielą się na dwie grupy, zależnie od tego, czy wyjaśniamy gotową sieć, czy budujemy sieć, która wyjaśnia się sama.
 
-<div>
-
-- **Pojęcia *a priori* nie pasują do danych**:
-  Cechy wymyślone z góry bywają trudne do wyuczenia lub pomijają kluczowe sygnały.
-- **Wyciek informacji (*Information Leakage*)**:
-  Model koduje klasy pod etykietami cech.
-- **Eksperyment kontrolny**:
-  Zastąpienie cech **losowymi słowami** (*„bird balsamy”*) daje niemal identyczny wynik!
-
+<div class="tree">
+  <div class="tree-box tree-root">Wyjaśnianie decyzji sieci neuronowej</div>
+  <div class="tree-branches">
+    <div class="tree-branch">
+      <div class="tree-arrow">↓</div>
+      <div class="tree-box"><span class="flow-label">Post-hoc</span>Po fakcie</div>
+    </div>
+    <div class="tree-branch">
+      <div class="tree-arrow">↓</div>
+      <div class="tree-box"><span class="flow-label">Ante-hoc</span>Z założenia</div>
+    </div>
+  </div>
 </div>
-<div class="col-right">
-
-![width:620px](img/slajd04_leakage.png)
-
-</div>
-
-<!--
-Notatki:
-- Problem 1: ludzkie cechy a priori nie pasują do tego, co sieć widzi w pikselach
-- Problem 2: wyciek informacji (leakage) - sieć oszukuje przy szerokiej warstwie
-- Rycina z artykułu: losowe słowa ("bird balsamy", "bird punditic") dają wysoką dokładność
--->
 
 ---
 
-# Pomysł autorów: Mechanistic CBM (M-CBM)
+# Post-hoc, czyli wyjaśnianie po fakcie
 
-- Odkrywanie cech **bezpośrednio z wnętrza sieci** zamiast ich arbitralnego narzucania z góry.
-- Zastosowanie **Sparse Autoencoders (SAE)** do dekompozycji cech oraz modeli **VLM** do ich nazywania.
+**Jak działa?** Sieć jest już wytrenowana i zostaje bez zmian. Mapa atrybucji (ang. Saliency) sprawdza, jak zmiana pikseli wpływa na wynik wybranej klasy, i zaznacza je na zdjęciu jako mapę ciepła.
 
-<div class="img-center">
+**Co daje?** Zaznacza obszary zdjęcia, które najmocniej podniosły wynik klasy. To daje nam wiedzę o tym co sieć neuronowa najbardziej wzięła pod uwagę. 
 
-![width:820px](img/slajd05_pipeline.png)
+**Ograniczenie.** Mapa nie mówi, czy zaznaczony obszar oznacza dziób, kolor czy teksturę. Nie wiemy, jakie pojęcie sieć rozpoznała.
 
+<div class="flow">
+  <div class="flow-box"><span class="flow-label">Wejście</span>Zdjęcie ptaka</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Sieć</span>Wytrenowana, bez zmian</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Wyjście</span>Hooded Warbler</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box flow-box-open"><span class="flow-label">Wyjaśnienie</span>Mapa ciepła na pikselach</div>
 </div>
 
-<!--
-Notatki:
-- Zmiana paradygmatu: wyciągamy cechy z wnętrza wytrenowanej sieci zamiast zgadywać
-- Sparse Autoencoder (SAE) rozplątuje wektory, model VLM je nazywa
-- 4 kroki: 1. Backbone -> 2. SAE -> 3. Nazywanie VLM -> 4. Rzadki klasyfikator
--->
+<div>TU ZDJECIE??</div>
 
 ---
 
-<!-- _class: two-columns -->
+# Ante-hoc, czyli CBM z nazwanych pojęć
 
-# Kroki 1 i 2: Rozłożyć i nazwać
+**Jak działa?** CBM dzieli klasyfikator na dwie części. Warstwa pojęć (Concept Bottleneck Layer) przewiduje z obrazu, które z nazwanych pojęć występują. Rzadki klasyfikator liniowy wybiera klasę wyłącznie na podstawie wartości tych pojęć. Cała informacja o obrazie musi przejść przez wąskie gardło, czyli listę pojęć.
 
-<div>
+**Co daje?** Decyzję można odczytać wprost, bo wkład pojęcia w klasę to jego wartość pomnożona przez wagę.
 
-- **Krok 1: Sparse Autoencoder (SAE)**
-  Rozbicie polisemantycznych neuronów sieci na rzadkie, **monosemantyczne** kierunki.
-- **Krok 2: Nazywanie cech (VLM)**
-  Wybór Top-10 aktywacji i wygenerowanie semantycznej etykiety przez model wizyjny (GPT-4.1).
-
+<div class="flow">
+  <div class="flow-box"><span class="flow-label">Wejście</span>Zdjęcie ptaka</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box flow-box-wide"><span class="flow-label">Warstwa pojęć</span>żółty ptak z czarną maską wokół oczu<br>czarna maska wokół żółtej twarzy<br>oliwkowozielony grzbiet</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Klasyfikator liniowy</span>Wybór klasy z pojęć</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Wyjście</span>Hooded Warbler</div>
 </div>
-<div class="col-right">
-
-![width:620px](img/slajd06_sae_ptaki.png)
-
-</div>
-
-<!--
-Notatki:
-- Superpozycja: pojedynczy neuron reaguje na kilka różnych rzeczy (polisemantyczność)
-- SAE rzutuje w wyższy wymiar z wymuszeniem rzadkości -> cechy monosemantyczne
-- VLM (GPT-4.1) dostaje Top-10 aktywacji i prompt kontrastowy -> precyzyjna etykieta
--->
 
 ---
 
 <!-- _class: two-columns -->
 
-# Kroki 3 i 4: Sprawdzić i zbudować model
+# Co jest nie tak z CBM?
 
 <div>
 
-- **Krok 3: Weryfikacja obecności cech**
-  Model VLM potwierdza obecność cechy na podzbiorze ~1000 obrazów (paczkowanie $5 \times 5$).
-- **Krok 4: Rzadki klasyfikator liniowy**
-  Wymuszenie rzadkości (**NCC = 5**): decyzja modelu opiera się średnio na **5 kluczowych cechach**.
+## Problem 1. Pojęcia wybrane z góry
+
+Dotychczasowe metody biorą pojęcia od ekspertów, z grafów wiedzy (baz powiązanych pojęć) albo z odpowiedzi dużych modeli językowych (LLM). Takie pojęcia mogą nie pomagać w rozpoznaniu klasy albo nie dać się nauczyć z obrazów. Dla zbioru zmian skórnych LLM zaproponował pojęcia "warm to the touch" i "medical report", których nie widać na zdjęciu.
 
 </div>
-<div class="col-right">
+<div>
 
-![width:620px](img/slajd07_wyjasnienie_ptak.png)
+## Problem 2. Wyciek informacji
+
+Wyciek oznacza, że CBM jest dokładny dzięki ukrytym wzorcom w wartościach pojęć, a nie dzięki ich znaczeniu. Pojęcie oznaczone tylko na obrazach jednej klasy działa jak etykieta tej klasy. Z frazami typu "bird pizza" zamiast nazw pojęć VLG-CBM dorównuje dokładnością oryginalnej sieci przy średnio około 1,5 pojęcia na decyzję. Model wygląda na czytelny, ale w praktyce dalej jest czarną skrzynką.
 
 </div>
 
-<!--
-Notatki:
-- Krok 3: potwierdzenie cechy na podzbiorze obrazów (siatka 5x5 oszczędza koszt API)
-- Krok 4: rzadki klasyfikator liniowy łączący cechy z klasami
-- Metryka NCC=5: średnio zaledwie 5 pojęć tłumaczy decyzję (wykres Lasówki)
--->
+---
+
+# Pomysł autorów, czyli Mechanistic CBM (M-CBM)
+
+Zamiast wybierać pojęcia z góry, autorzy biorą te, których wytrenowana sieć już używa. Spodziewają się, że takie pojęcia łatwiej nauczyć i że lepiej przewidują klasę.
+
+Metoda ma cztery kroki.
+
+<div class="flow">
+  <div class="flow-box"><span class="flow-label">Krok 1</span>Autoenkoder rzadki (SAE) rozkłada reprezentację sieci na neurony, czyli kandydatów na pojęcia</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Krok 2</span>Model GPT-4.1 nazywa każdy neuron na podstawie zdjęć, które go najmocniej włączają</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Krok 3</span>GPT-4.1 sprawdza, czy pojęcie występuje na zdjęciach treningowych, bo nazwa to tylko hipoteza</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Krok 4</span>Warstwa pojęć uczy się z tych etykiet, a rzadki klasyfikator liniowy wybiera klasę</div>
+</div>
+
+---
+
+# Krok 1. Wydobycie pojęć z sieci
+
+Każde zdjęcie treningowe przechodzi przez wytrenowaną sieć, która zamienia je na wektor liczb. W ResNet-18 ma on 512 liczb. Pojedyncza liczba nie odpowiada jednej cesze, bo cechy są w wektorze pomieszane, jak kolory w zmieszanej farbie.
+
+Autoenkoder rzadki rozkłada ten wektor na wiele prostych składników. Uczy się z dwoma celami. Ma odtworzyć wektor jak najdokładniej i włączać dla jednego zdjęcia tylko kilka neuronów. Każdy neuron SAE jest kandydatem na jedno pojęcie.
+
+Na zbiorze CUB SAE ma 512 neuronów, a dla jednego zdjęcia włącza się średnio 7,66 z nich. Neurony, które nie włączają się nigdy lub prawie nigdy, autorzy usuwają, o ile jakość spada najwyżej o około 1%. Klasyfikator zachowuje wtedy 98,41% swojej dokładności.
+
+<div class="flow">
+  <div class="flow-box"><span class="flow-label">Wejście</span>Zdjęcie ptaka</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Sieć</span>Wektor 512 liczb</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">SAE</span>Rozkład na neurony</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Wynik</span>Włączone średnio 7,66 z 512 neuronów</div>
+</div>
+
+<br>
+<small>SAE - Sparse Autoencoder - Autoenkoder rzadki</small>
+
+---
+
+# Krok 2. Nazwanie pojęć
+
+Dla każdego neuronu SAE autorzy wybierają 10 zdjęć, które włączają go najmocniej, i nakładają na nie mapy ciepła. Dodają 10 zdjęć, które go nie włączają. Połowa z nich jest losowa, a połowa to zdjęcia najbardziej podobne do aktywnych, żeby model musiał wskazać drobną cechę.
+
+GPT-4.1 dostaje te zdjęcia i pytanie "What is this neuron looking for?". Odpowiada krótką nazwą, na przykład "black mask around yellow face". Nie może użyć nazwy klasy. Jeśli to zrobi, pytanie jest ponawiane.
+
+Na końcu autorzy łączą nazwy o podobieństwie powyżej 0,98 w jedno pojęcie. Zostaje 278 pojęć dla CUB, 73 dla ISIC2018 i 2648 dla ImageNet. Nazwanie jednego pojęcia kosztuje około 0,02 USD.
+
+<div class="flow">
+  <div class="flow-box"><span class="flow-label">Neuron SAE</span>Kandydat na pojęcie</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Zdjęcia</span>10 aktywnych i 10 nieaktywnych</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">GPT-4.1</span>Co szuka ten neuron?</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Wynik</span>Krótka nazwa pojęcia</div>
+</div>
+
+---
+
+# Krok 3. Oznaczenie zdjęć
+
+Nazwa neuronu to tylko hipoteza o tym, na co on reaguje. Dlatego autorzy nie używają neuronów SAE wprost jako pojęć. GPT-4.1 oznacza zdjęcia treningowe, a nowa warstwa pojęć uczy się na tych etykietach.
+
+Dla każdego pojęcia wybierają do 1000 zdjęć. Połowa to zdjęcia, które mocno włączają neuron (powyżej 95. percentyla aktywacji), a połowa to zdjęcia nieaktywne. Obie grupy obejmują równomiernie wszystkie klasy, żeby pojęcie nie związało się z jedną klasą.
+
+Siatka jest tańsza, ale mniej dokładna. Na CUB trafność oznaczeń wynosi 69,46% przy siatce i 74,00% przy pojedynczych zdjęciach, które wymagają jednak 25 razy więcej zapytań.
+
+<div class="stat-grid">
+  <div class="stat-box"><span class="stat-num">1000</span><span class="stat-label">zdjęć na jedno pojęcie</span></div>
+  <div class="stat-box"><span class="stat-num">5 × 5</span><span class="stat-label">25 zdjęć w jednym zapytaniu do GPT-4.1</span></div>
+  <div class="stat-box"><span class="stat-num">1 / 0 / -1</span><span class="stat-label">jest, brak, brak etykiety</span></div>
+</div>
+
+---
+
+# Krok 4. Trening modelu z wąskim gardłem
+
+Model ma trzy części. Zamrożona sieć zamienia zdjęcie na wektor liczb. Warstwa pojęć (CBL) przewiduje z niego, czy występuje każde pojęcie, i uczy się na etykietach z kroku 3, pomijając pary bez etykiety. Rzadki klasyfikator liniowy wybiera klasę wyłącznie na podstawie wartości pojęć.
+
+Kara w klasyfikatorze zeruje większość wag, więc każda klasa zależy od kilku pojęć. Wkład pojęcia w decyzję to jego wartość pomnożona przez wagę. Poniżej wkłady dla Hooded Warbler.
+
+<div class="bars">
+  <div class="bar-row"><span class="bar-label">żółty ptak z czarną maską wokół oczu</span><span class="bar-track"><span class="bar-fill" style="width: 100%"></span></span><span class="bar-value">+4,80</span></div>
+  <div class="bar-row"><span class="bar-label">czarna maska wokół żółtej twarzy</span><span class="bar-track"><span class="bar-fill" style="width: 90%"></span></span><span class="bar-value">+4,34</span></div>
+  <div class="bar-row"><span class="bar-label">jaskrawożółte upierzenie z czarną czapką</span><span class="bar-track"><span class="bar-fill" style="width: 27%"></span></span><span class="bar-value">+1,28</span></div>
+  <div class="bar-row"><span class="bar-label">żółty wierzch, ciemne ciało i dziób</span><span class="bar-track"><span class="bar-fill" style="width: 8%"></span></span><span class="bar-value">+0,38</span></div>
+  <div class="bar-row"><span class="bar-label">oliwkowozielony grzbiet</span><span class="bar-track"><span class="bar-fill" style="width: 3%"></span></span><span class="bar-value">+0,12</span></div>
+  <div class="bar-row"><span class="bar-label">pozostałe 273 pojęcia razem</span><span class="bar-track"><span class="bar-fill bar-fill-muted" style="width: 1%"></span></span><span class="bar-value">+0,05</span></div>
+</div>
+
+---
+
+# NCC, czyli uczciwe porównanie modeli
+
+Im więcej pojęć klasyfikator może użyć, tym wyższą ma dokładność, ale rośnie też wyciek, a wyjaśnienia robią się długie. Modele trzeba więc porównywać przy takiej samej liczbie pojęć w decyzji.
+
+Wcześniejsza miara NEC liczy średnią liczbę niezerowych wag na klasę. Przy małej liczbie klas ogranicza ona cały słownik pojęć, bo przy 3 klasach i NEC=5 model może mieć najwyżej 15 pojęć.
+
+NCC (Number of Contributing Concepts) liczy dla każdej decyzji, ile pojęć pokrywa 95% sumy wkładów, i uśrednia wynik. NCC=5 oznacza, że średnio 5 pojęć tłumaczy co najmniej 95% decyzji. Model może mieć wiele pojęć, ale pojedynczą decyzję tłumaczy kilkoma.
 
 ---
 
