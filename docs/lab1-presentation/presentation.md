@@ -97,13 +97,11 @@ Metody wyjaśniania dzielą się na dwie grupy, zależnie od tego, czy wyjaśnia
   <div class="flow-box flow-box-open"><span class="flow-label">Wyjaśnienie</span>Mapa ciepła na pikselach</div>
 </div>
 
-<div>TU ZDJECIE??</div>
-
 ---
 
 # Ante-hoc, czyli CBM z nazwanych pojęć
 
-**Jak działa?** CBM dzieli klasyfikator na dwie części. Warstwa pojęć (Concept Bottleneck Layer) przewiduje z obrazu, które z nazwanych pojęć występują. Rzadki klasyfikator liniowy wybiera klasę wyłącznie na podstawie wartości tych pojęć. Cała informacja o obrazie musi przejść przez wąskie gardło, czyli listę pojęć.
+**Jak działa?** CBM dzieli klasyfikator na dwie części. Warstwa pojęć (ang. Concept Bottleneck Layer) przewiduje z obrazu, które z nazwanych pojęć występują. Rzadki klasyfikator liniowy wybiera klasę wyłącznie na podstawie wartości tych pojęć. Cała informacja o obrazie musi przejść przez wąskie gardło, czyli listę pojęć.
 
 **Co daje?** Decyzję można odczytać wprost, bo wkład pojęcia w klasę to jego wartość pomnożona przez wagę.
 
