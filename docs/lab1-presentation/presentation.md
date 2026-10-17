@@ -138,7 +138,7 @@ Dotychczasowe metody biorą pojęcia od ekspertów, z grafów wiedzy (baz powią
 
 ## Problem 2. Wyciek informacji
 
-Wyciek oznacza, że CBM jest dokładny dzięki ukrytym wzorcom w wartościach pojęć, a nie dzięki ich znaczeniu. Pojęcie oznaczone tylko na obrazach jednej klasy działa jak etykieta tej klasy. VLG-CBM, z losowymi frazami typu "bird pizza" zamiast nazw pojęć, dorównuje dokładnością oryginalnej sieci przy średnio około 1,5 pojęcia na decyzję. Model wygląda na czytelny, ale w praktyce dalej jest czarną skrzynką.
+Wyciek oznacza, że CBM jest dokładny dzięki ukrytym wzorcom w wartościach pojęć, a nie dzięki ich znaczeniu — np. pojęcie oznaczone tylko na obrazach jednej klasy działa jak jej etykieta. VLG-CBM, z losowymi frazami typu "bird pizza" zamiast nazw pojęć, dorównuje dokładnością oryginalnej sieci przy średnio około 1,5 pojęcia na decyzję. Model wygląda na czytelny, ale w praktyce dalej jest czarną skrzynką.
 
 </div>
 
