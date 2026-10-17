@@ -296,18 +296,37 @@ Notatki:
 
 ---
 
+# Wybór zbioru danych
+
+| Zbiór | Klasy | Dane | Interpretowalność cech |
+|---|---|---|---|
+| **CUB-200-2011** | 200 (gatunki ptaków) | ~11 800 zdjęć, wysoka rozdzielczość | Wysoka — wyraziste cechy wizualne (dziób, upierzenie, skrzydła) |
+| ISIC 2018 | 7 (zmiany skórne) | ~10 000 zdjęć dermatoskopowych | Niska dla laika — cechy wymagają wiedzy medycznej |
+| CIFAR-10 | 10 (obiekty ogólne) | 60 000 zdjęć, 32×32 px | Niska — zbyt mała rozdzielczość na analizę szczegółów |
+
+Wybieramy **CUB-200-2011** — wyraziste, nazywalne cechy wizualne oraz bezpośrednia porównywalność z wynikami z artykułu (ten sam zbiór w M-CBM).
+
+<!--
+Notatki:
+- Trzy kandydatury wprost z treści zadania projektowego
+- CIFAR-10 odpada przez rozdzielczość 32x32 - za mało szczegółu na cechy wizualne
+- ISIC2018 odpada bo cechy medyczne trudno ocenić bez wiedzy eksperckiej
+- CUB-200-2011 wygrywa też dlatego, że to ten sam zbiór co w artykule - łatwiej porównać wyniki
+-->
+
+---
+
 <!-- _class: two-columns -->
 
-# Dane i modele bazowe
+# Krok A. Klasyfikator bazowy i ekstrakcja cech
 
 <div>
 
-- **Zbiór CUB-200-2011**:
-  200 gatunków ptaków, wyraziste cechy wizualne (dziób, ubarwienie, skrzydła).
-- **Model bazowy (Backbone)**:
-  ResNet-18, ekstrakcja wektora 512 cech z warstwy `avgpool`.
-- **Środowisko obliczeniowe**:
-  PyTorch + biblioteka SAE, czas treningu SAE: **~10–20 min na GPU**.
+Trenujemy ResNet-18 na CUB-200-2011 jako nasz "czarnoskrzynkowy" klasyfikator bazowy — analogicznie do modelu z artykułu.
+
+Z warstwy `avgpool`, czyli ostatniej przed klasyfikatorem, wyciągamy dla każdego zdjęcia wektor 512 liczb. To reprezentacja, którą w Kroku B rozłoży autoenkoder.
+
+**Środowisko**: PyTorch, trening na GPU.
 
 </div>
 <div class="col-right">
@@ -318,9 +337,78 @@ Notatki:
 
 <!--
 Notatki:
-- Zbiór: CUB-200-2011 (200 gatunków ptaków, bogate cechy anatomiczne)
-- Backbone: ResNet-18, ekstrakcja 512 cech z warstwy avgpool
-- Czas treningu: SAE na zamrożonych embeddingach uczy się szybko (~10-20 min na GPU)
+- ResNet-18 trenowany na CUB-200-2011, tak samo jak backbone w artykule
+- Embeddingi z warstwy avgpool (512 liczb na zdjęcie)
+- To wejście do Kroku B (SAE)
+-->
+
+---
+
+# Krok B. Trening Sparse Autoencodera
+
+Na zamrożonych embeddingach z Kroku A trenujemy Sparse Autoencoder (SAE). Uczy się on rekonstruować wektor 512 liczb, aktywując przy tym tylko kilka neuronów na zdjęcie — każdy aktywny neuron to kandydat na pojęcie.
+
+Jakość oceniamy dwoma miarami: błędem rekonstrukcji (MSE) oraz stopniem rzadkości aktywacji (ile neuronów włącza się średnio na zdjęcie).
+
+<div class="flow">
+  <div class="flow-box"><span class="flow-label">Wejście</span>Wektor 512 liczb (Krok A)</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">SAE</span>Rekonstrukcja + rzadka aktywacja</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Wynik</span>Kandydaci na pojęcia</div>
+</div>
+
+<!--
+Notatki:
+- SAE trenowany na zamrożonych embeddingach z Kroku A
+- Dwa cele: rekonstrukcja wektora + rzadka aktywacja
+- Ewaluacja: MSE rekonstrukcji i rzadkość (średnia liczba aktywnych neuronów)
+-->
+
+---
+
+# Krok C. Interpretowalność i porównanie metod
+
+Dla każdej cechy SAE wybieramy obrazy najmocniej ją aktywujące (Top-K) i sprawdzamy, czy odpowiadają spójnemu pojęciu wizualnemu — np. zawsze temu samemu kształtowi dzioba czy kolorowi upierzenia.
+
+Tę samą analizę powtarzamy dla PCA i klasycznego, gęstego autoenkodera, żeby ocenić, która reprezentacja daje najbardziej czytelne, monosemantyczne cechy.
+
+<div class="flow">
+  <div class="flow-box"><span class="flow-label">PCA</span>Komponenty główne</div>
+  <div class="flow-arrow">↔</div>
+  <div class="flow-box"><span class="flow-label">Gęsty AE</span>Autoenkoder bez rzadkości</div>
+  <div class="flow-arrow">↔</div>
+  <div class="flow-box"><span class="flow-label">SAE</span>Autoenkoder rzadki</div>
+</div>
+
+<!--
+Notatki:
+- Inspekcja Top-K obrazów per cecha - czy cecha jest spójna wizualnie
+- Porównanie trzech metod redukcji: PCA, gęsty AE, SAE
+- Cel: sprawdzić, która reprezentacja jest najbardziej monosemantyczna
+-->
+
+---
+
+# Krok D. Interwencja na cechach
+
+Wyzerowujemy wybraną cechę i sprawdzamy, jak zmienia się predykcja oraz pewność klasyfikatora.
+
+Jeśli wyłączenie cechy w przewidywalny sposób zmienia decyzję, to dowód, że cecha faktycznie odpowiada za rozpoznawany wzorzec wizualny, a nie jest przypadkowa.
+
+<div class="flow">
+  <div class="flow-box"><span class="flow-label">Przed</span>Cecha aktywna → predykcja X</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box flow-box-open"><span class="flow-label">Ablacja</span>Zerowanie cechy</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Po</span>Predykcja i pewność — zmiana?</div>
+</div>
+
+<!--
+Notatki:
+- Ablacja = wyzerowanie wybranej cechy przed klasyfikatorem
+- Mierzymy zmianę predykcji i pewności (confidence)
+- Przewidywalna zmiana = dowód, że cecha realnie coś reprezentuje
 -->
 
 ---
@@ -386,3 +474,7 @@ Notatki:
 - Błąd rekonstrukcji: MSE i wpływ kompresji na accuracy klasyfikatora
 - Ablacja: pomiar spadku pewności modelu po wyzerowaniu kluczowej cechy
 -->
+
+---
+
+# Literatura
