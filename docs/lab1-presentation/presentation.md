@@ -361,6 +361,36 @@ Notatki:
 
 ---
 
+# Metody porównawcze: PCA, AE, VLM
+
+<div class="grid-3">
+
+<div class="card">
+<h3>PCA</h3>
+<p>Analiza głównych składowych — klasyczna metoda redukcji wymiarowości. Znajduje kierunki o największej wariancji w danych i rzutuje na nie wektor cech, bez wymuszania rzadkości czy interpretowalności pojedynczych komponentów.</p>
+</div>
+
+<div class="card">
+<h3>AE</h3>
+<p>Gęsty autoenkoder — sieć ucząca się kompresować i odtwarzać wektor cech, bez ograniczeń na rzadkość aktywacji. W przeciwieństwie do SAE aktywne są zwykle wszystkie neurony warstwy ukrytej, co utrudnia przypisanie im pojedynczych, nazwalnych pojęć.</p>
+</div>
+
+<div class="card">
+<h3>VLM</h3>
+<p>Vision-Language Model — model łączący rozumienie obrazu z językiem naturalnym (np. GPT-4.1), opisujący słowami to, co widzi na zdjęciu. W wersji ambitnej projektu mógłby automatycznie nazywać cechy odkryte przez SAE.</p>
+</div>
+
+</div>
+
+<!--
+Notatki:
+- Krótki słownik pojęć przed wejściem w szczegóły Kroków A-D
+- PCA i AE będą porównywane z SAE w Kroku C
+- VLM dotyczy poziomu ambitnego (automatyczne nazywanie cech)
+-->
+
+---
+
 <!-- _class: two-columns -->
 
 # Krok A. Klasyfikator bazowy i ekstrakcja cech
