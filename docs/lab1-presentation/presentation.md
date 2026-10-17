@@ -50,15 +50,16 @@ Z zewnątrz widzimy tylko wynik. Nie wiemy, czy sieć patrzy na ptaka, czy na pr
 <!-- 2 -->
 # Dlaczego wyjaśnialność ma znaczenie
 
-**Zaufanie w zastosowaniach krytycznych.** Artykuł wymienia opiekę zdrowotną, autonomiczne samochody i obronność jako dziedziny, w których model musi być przejrzysty, a nie tylko dokładny.
+**Zaufanie w zastosowaniach krytycznych.** W opiece zdrowotnej, autonomicznych samochodach czy obronności model musi być przejrzysty, nie tylko dokładny.
 
-**Wykrywanie fałszywych korelacji.** Sieć może dać poprawny wynik z niewłaściwego powodu, na przykład rozpoznać ptaka po tle. Bez wyjaśnienia nikt tego nie zauważy.
+**Wykrywanie fałszywych korelacji.** Sieć może dać poprawny wynik z niewłaściwego powodu — np. rozpoznając ptaka po tle zamiast po nim samym.
 
-**Poprawianie błędów.** W artykule wyzerowanie jednego pojęcia zmieniło błędną diagnozę znamienia na poprawną. Znajomość zawodnej cechy pozwala ją skorygować.
+**Poprawianie błędów.** Wyzerowanie jednej zawodnej cechy potrafi zmienić błędną diagnozę na poprawną.
 
-**Odpowiedzialność za decyzję.** Osoba korzystająca z wyniku, na przykład lekarz, musi umieć go uzasadnić przed pacjentem.
+**Odpowiedzialność za decyzję.** Lekarz korzystający z wyniku musi umieć go uzasadnić pacjentowi.
 
 ---
+<!-- skrócone: każdy z 4 punktów zmieścił się w jednym zdaniu zamiast dwóch - usunięte: "Artykuł wymienia" (zbędne odwołanie do źródła), "Bez wyjaśnienia nikt tego nie zauważy" (domyślne z kontekstu), "W artykule" + powtórzone podsumowanie w pkt. 3, uogólnienie "Osoba korzystająca z wyniku" zastąpione konkretem "Lekarz" -->
 <!-- skrócone, brak możliwości przypisania pojedynczej cechy neuronowi opisany później -->
 
 <!-- 3 -->
