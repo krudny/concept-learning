@@ -31,7 +31,7 @@ Notatki:
 
 Sieć neuronowa rozpoznaje gatunek ptaka na zdjęciu z dużą dokładnością, ale nie potrafi wyjaśnić, dlaczego wybrała właśnie ten gatunek.
 
-Decyzja wynika z działania milionów parametrów w kolejnych warstwach sieci. Pojedynczy neuron często reaguje na kilka niepowiązanych ze sobą wzorców, więc nie da się mu przypisać jednej cechy, którą człowiek mógłby nazwać.
+Decyzja wynika z milionów parametrów sieci, a pojedynczy neuron często reaguje na kilka niepowiązanych ze sobą wzorców naraz.
 
 Z zewnątrz widzimy tylko wynik. Nie wiemy, czy sieć patrzy na ptaka, czy na przypadkowy szczegół, na przykład tło zdjęcia.
 
@@ -59,6 +59,7 @@ Z zewnątrz widzimy tylko wynik. Nie wiemy, czy sieć patrzy na ptaka, czy na pr
 **Odpowiedzialność za decyzję.** Osoba korzystająca z wyniku, na przykład lekarz, musi umieć go uzasadnić przed pacjentem.
 
 ---
+<!-- skrócone, brak możliwości przypisania pojedynczej cechy neuronowi opisany później -->
 
 <!-- 3 -->
 # Dwa sposoby wyjaśniania decyzji sieci
