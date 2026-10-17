@@ -88,7 +88,7 @@ Metody wyjaśniania dzielą się na dwie grupy, zależnie od tego, czy wyjaśnia
 
 **Jak działa?** Sieć jest już wytrenowana i zostaje bez zmian. Mapa atrybucji (ang. Saliency) sprawdza, jak zmiana pikseli wpływa na wynik wybranej klasy, i zaznacza je na zdjęciu jako mapę ciepła.
 
-**Co daje?** Zaznacza obszary zdjęcia, które najmocniej podniosły wynik klasy. Wskazuje, na co sieć zwróciła największą uwagę. 
+**Co daje?** Pokazuje, które obszary zdjęcia najmocniej podniosły wynik klasy — czyli na co sieć zwróciła największą uwagę.
 
 **Ograniczenie.** Mapa nie mówi, czy zaznaczony obszar oznacza dziób, kolor czy teksturę. Nie wiemy, jakie pojęcie sieć rozpoznała.
 
@@ -107,7 +107,7 @@ Metody wyjaśniania dzielą się na dwie grupy, zależnie od tego, czy wyjaśnia
 <!-- 5 -->
 # Ante-hoc, czyli CBM z nazwanych pojęć
 
-**Jak działa?** CBM dzieli model na dwie części. Warstwa pojęć (ang. Concept Bottleneck Layer) przewiduje z obrazu, które z nazwanych pojęć występują. Rzadki klasyfikator liniowy wybiera klasę wyłącznie na podstawie wartości tych pojęć. Cała informacja o obrazie musi przejść przez wąskie gardło, czyli listę pojęć.
+**Jak działa?** CBM dzieli model na dwie części: warstwę pojęć (ang. Concept Bottleneck Layer), która przewiduje z obrazu, które z nazwanych pojęć występują, oraz rzadki klasyfikator liniowy, który wybiera klasę wyłącznie na ich podstawie. Cała informacja o obrazie musi przejść przez to wąskie gardło, czyli listę pojęć.
 
 **Co daje?** Decyzję można odczytać wprost, bo wkład pojęcia w klasę to jego wartość pomnożona przez wagę.
 
@@ -166,9 +166,9 @@ Metoda ma cztery kroki.
 <!-- 8 -->
 # Krok 1. Wydobycie pojęć z sieci
 
-Każde zdjęcie treningowe przechodzi przez wytrenowaną sieć, która zamienia je na wektor liczb. W ResNet-18 ma on 512 liczb. Pojedyncza liczba nie odpowiada jednej cesze, bo cechy w wektorze są pomieszane.
+Każde zdjęcie treningowe przechodzi przez wytrenowaną sieć (ResNet-18), która zamienia je na wektor 512 liczb. Pojedyncza liczba nie odpowiada jednej cesze, bo cechy w wektorze są pomieszane.
 
-Autoenkoder rzadki (SAE) rozkłada ten wektor na wiele prostych składników. SAE uczy się jednocześnie odtwarzać wektor i aktywować dla jednego zdjęcia tylko kilka neuronów — każdy taki neuron to kandydat na pojęcie.
+Autoenkoder rzadki (SAE) rozkłada ten wektor na proste składniki, ucząc się jednocześnie go odtwarzać i aktywować dla jednego zdjęcia tylko kilka neuronów — każdy taki neuron to kandydat na pojęcie.
 
 <!-- Na zbiorze CUB SAE ma 512 neuronów, a dla jednego zdjęcia włącza się średnio 7,66 z nich. Neurony, które nie włączają się nigdy lub prawie nigdy, autorzy usuwają, o ile jakość spada najwyżej o około 1%.  usunięte - Powtórzenie treści z diagramu--> 
 
@@ -190,7 +190,7 @@ Autoenkoder rzadki (SAE) rozkłada ten wektor na wiele prostych składników. SA
 <!-- 9 -->
 # Krok 2. Nazwanie pojęć
 
-Dla każdego neuronu SAE autorzy wybierają 10 zdjęć, które włączają go najmocniej, i nakładają na nie mapy ciepła. Dodają 10 zdjęć, które go nie włączają. Połowa jest losowa, druga połowa podobna do aktywnych, by wymusić wskazanie drobnej cechy przez model.
+Dla każdego neuronu SAE autorzy wybierają 10 zdjęć, które włączają go najmocniej, i nakładają na nie mapy ciepła. Dodają też 10 zdjęć nieaktywnych — połowę losowych, połowę podobnych do aktywnych, by wymusić wskazanie drobnej cechy przez model.
 
 GPT-4.1 dostaje te zdjęcia i pytanie "What is this neuron looking for?". Odpowiada krótką nazwą, na przykład "black mask around yellow face". Nie może użyć nazwy klasy. Jeśli to zrobi, pytanie jest ponawiane.
 
@@ -248,7 +248,7 @@ Kara w klasyfikatorze zeruje większość wag, więc każda klasa zależy od kil
 
 Im więcej pojęć klasyfikator może użyć, tym wyższą ma dokładność, ale rośnie też wyciek, a wyjaśnienia robią się długie. Modele trzeba więc porównywać przy takiej samej liczbie pojęć w decyzji.
 
-Wcześniejsza miara NEC (Number of Effective Concepts) liczy średnią liczbę niezerowych wag na klasę. Przy małej liczbie klas ogranicza ona cały słownik pojęć, bo przy 3 klasach i NEC=5 model może mieć najwyżej 15 pojęć.
+Wcześniejsza miara NEC (Number of Effective Concepts), licząca średnią liczbę niezerowych wag na klasę, przy małej liczbie klas ogranicza cały słownik pojęć — np. przy 3 klasach i NEC=5 model może mieć najwyżej 15 pojęć.
 
 NCC (Number of Contributing Concepts) liczy dla każdej decyzji, ile pojęć pokrywa 95% sumy wkładów, i uśrednia wynik. NCC=5 oznacza, że średnio 5 pojęć tłumaczy co najmniej 95% decyzji. Model może mieć wiele pojęć, ale pojedynczą decyzję tłumaczy kilkoma.
 
