@@ -246,7 +246,7 @@ NCC (Number of Contributing Concepts) liczy dla każdej decyzji, ile pojęć pok
 
 - **Trafność CUB-200** ($NCC=5$): **76.7%** (Black-Box) vs **73.7%** (**M-CBM**) vs **69.1%** (VLG-CBM).
 - **Interwencja**: modyfikacja pojedynczej cechy odwraca błędną diagnozę czerniaka (ISIC 2018).
-- **Ograniczenia**: koszt i czas zapytań API VLM (~0.16$ / cechę), wyzwanie przy tysiącach pojęć.
+- **Ograniczenia**: koszt i czas zapytań API VLM (ang. Vision-Language Model, ~0.16$ / cechę), wyzwanie przy tysiącach pojęć.
 
 <div class="img-center">
 
@@ -276,7 +276,7 @@ Notatki:
 <div class="card">
 <span class="badge">Pytanie 2</span>
 <h3>Porównanie metod</h3>
-<p>Która metoda daje najczytelniejszą reprezentację: <b>PCA</b>, gęsty <b>Autoenkoder</b> czy <b>SAE</b>?</p>
+<p>Która metoda daje najczytelniejszą reprezentację: <b>PCA</b> (analiza głównych składowych), gęsty <b>Autoenkoder</b> czy <b>SAE</b>?</p>
 </div>
 
 <div class="card">
@@ -312,6 +312,51 @@ Notatki:
 - CIFAR-10 odpada przez rozdzielczość 32x32 - za mało szczegółu na cechy wizualne
 - ISIC2018 odpada bo cechy medyczne trudno ocenić bez wiedzy eksperckiej
 - CUB-200-2011 wygrywa też dlatego, że to ten sam zbiór co w artykule - łatwiej porównać wyniki
+-->
+
+---
+
+# Plan realizacji w trzech poziomach
+
+<div class="grid-3">
+
+<div class="card">
+<span class="badge">Poziom 1: MVP</span>
+<h3>Minimum</h3>
+<ul>
+  <li>Trening ResNet-18 i ekstrakcja cech.</li>
+  <li>Trening Sparse Autoencodera (SAE).</li>
+  <li>Wizualizacja Top-K aktywacji dla cech.</li>
+</ul>
+</div>
+
+<div class="card">
+<span class="badge">Poziom 2: Standard</span>
+<h3>Wersja właściwa</h3>
+<ul>
+  <li>Porównanie: <b>PCA vs AE vs SAE</b>.</li>
+  <li>Ocena rzadkości i błędu rekonstrukcji.</li>
+  <li>Testy ablacji (wyłączanie cech).</li>
+</ul>
+</div>
+
+<div class="card">
+<span class="badge">Poziom 3: Ambitny</span>
+<h3>Wersja rozszerzona</h3>
+<ul>
+  <li>Etykietowanie cech modelem VLM.</li>
+  <li>Rzadki klasyfikator liniowy na cechach.</li>
+  <li>Weryfikacja wycieku informacji (*leakage*).</li>
+</ul>
+</div>
+
+</div>
+
+<!--
+Notatki:
+- Poziom 1 (MVP): pipeline bazowy (ResNet-18 + SAE + skrypt wizualizacji Top-K)
+- Poziom 2 (Właściwy): porównanie jakości reprezentacji (PCA vs AE vs SAE) + ablacja
+- Poziom 3 (Ambitny): automatyczne nazwy z VLM + klasyfikator + test leakage
 -->
 
 ---
@@ -409,51 +454,6 @@ Notatki:
 - Ablacja = wyzerowanie wybranej cechy przed klasyfikatorem
 - Mierzymy zmianę predykcji i pewności (confidence)
 - Przewidywalna zmiana = dowód, że cecha realnie coś reprezentuje
--->
-
----
-
-# Plan realizacji w trzech poziomach
-
-<div class="grid-3">
-
-<div class="card">
-<span class="badge">Poziom 1: MVP</span>
-<h3>Minimum</h3>
-<ul>
-  <li>Trening ResNet-18 i ekstrakcja cech.</li>
-  <li>Trening Sparse Autoencodera (SAE).</li>
-  <li>Wizualizacja Top-K aktywacji dla cech.</li>
-</ul>
-</div>
-
-<div class="card">
-<span class="badge">Poziom 2: Standard</span>
-<h3>Wersja właściwa</h3>
-<ul>
-  <li>Porównanie: <b>PCA vs AE vs SAE</b>.</li>
-  <li>Ocena rzadkości i błędu rekonstrukcji.</li>
-  <li>Testy ablacji (wyłączanie cech).</li>
-</ul>
-</div>
-
-<div class="card">
-<span class="badge">Poziom 3: Ambitny</span>
-<h3>Wersja rozszerzona</h3>
-<ul>
-  <li>Etykietowanie cech modelem VLM.</li>
-  <li>Rzadki klasyfikator liniowy na cechach.</li>
-  <li>Weryfikacja wycieku informacji (*leakage*).</li>
-</ul>
-</div>
-
-</div>
-
-<!--
-Notatki:
-- Poziom 1 (MVP): pipeline bazowy (ResNet-18 + SAE + skrypt wizualizacji Top-K)
-- Poziom 2 (Właściwy): porównanie jakości reprezentacji (PCA vs AE vs SAE) + ablacja
-- Poziom 3 (Ambitny): automatyczne nazwy z VLM + klasyfikator + test leakage
 -->
 
 ---
