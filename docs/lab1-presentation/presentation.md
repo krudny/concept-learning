@@ -508,3 +508,46 @@ Notatki:
 ---
 
 # Literatura
+
+<div class="grid-3">
+
+<div class="card">
+<h3>Scaling and evaluating sparse autoencoders</h3>
+<p class="source"><a href="https://proceedings.iclr.cc/paper_files/paper/2025/hash/42ef3308c230942d223c411adf182c88-Abstract-Conference.html">ICLR 2025</a></p>
+<p>Analiza, jak jakość i rzadkość cech SAE skaluje się wraz z rozmiarem modelu i danych; wprowadza aktywację TopK jako alternatywę dla kary L1.</p>
+</div>
+
+<div class="card">
+<h3>A Holistic Approach to Unifying Automatic Concept Extraction and Concept Importance Estimation</h3>
+<p class="source"><a href="https://proceedings.neurips.cc/paper_files/paper/2023/hash/abf3682c9cf9245a0294a4bebe4544ff-Abstract-Conference.html">NeurIPS 2023</a></p>
+<p>Łączy automatyczne wydobywanie pojęć wizualnych z oceną ich wpływu na decyzję klasyfikatora w jedną spójną metodę.</p>
+</div>
+
+<div class="card">
+<h3>Sparse Autoencoders Learn Monosemantic Features in Vision-Language Models</h3>
+<p class="source"><a href="https://proceedings.neurips.cc/paper_files/paper/2025/hash/89e83382abeee53b932a6df62edbf9cc-Abstract-Conference.html">NeurIPS 2025</a></p>
+<p>Pokazuje, że SAE trenowane na reprezentacjach modeli wizyjno-językowych odkrywają cechy monosemantyczne, podobnie jak w modelach językowych.</p>
+</div>
+
+</div>
+
+---
+
+# Literatura (c.d.)
+
+<div class="grid-3">
+
+<div class="card">
+<h3>Interpretable and Testable Vision Features via Sparse Autoencoders</h3>
+<p class="source"><a href="https://arxiv.org/abs/2502.06755">arXiv, 2025</a></p>
+<p>Trenuje SAE na reprezentacjach modeli wizyjnych i proponuje sposób testowania, czy odkryte cechy faktycznie odpowiadają spójnym pojęciom.</p>
+</div>
+
+<div class="card">
+<h3>Deep Residual Learning for Image Recognition</h3>
+<p class="source"><a href="https://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html">CVPR 2016</a></p>
+<p>Oryginalna praca wprowadzająca architekturę ResNet — backbone, który trenujemy i analizujemy w naszym projekcie.</p>
+</div>
+
+</div>
+
