@@ -164,6 +164,26 @@ Metoda ma cztery kroki.
 ---
 
 <!-- 8 -->
+# Pipeline M-CBM
+
+<div class="img-center">
+
+![width:1000px](img/slajd05_pipeline.png)
+
+</div>
+
+<!--
+Notatki:
+- Architektura M-CBM z artykułu (ICLR 2026):
+  1. Ekstrakcja z backbone i rozkład przez SAE na kandydatów na pojęcia
+  2. Nazywanie neuronów przez GPT-4.1 na podstawie Top-K aktywacji
+  3. Adnotacja zbioru danych pod kątem obecności pojęć
+  4. Trening warstwy CBL oraz rzadkiego klasyfikatora liniowego
+-->
+
+---
+
+<!-- 9 -->
 # Krok 1. Wydobycie pojęć z sieci
 
 Każde zdjęcie treningowe przechodzi przez wytrenowaną sieć (ResNet-18), która zamienia je na wektor 512 liczb. Pojedyncza liczba nie odpowiada jednej cesze, bo cechy w wektorze są pomieszane.
@@ -187,7 +207,7 @@ Autoenkoder rzadki (SAE) rozkłada ten wektor na proste składniki, ucząc się 
 
 ---
 
-<!-- 9 -->
+<!-- 10 -->
 # Krok 2. Nazwanie pojęć
 
 Dla każdego neuronu SAE autorzy wybierają 10 zdjęć, które włączają go najmocniej, i nakładają na nie mapy ciepła. Dodają też 10 zdjęć nieaktywnych — połowę losowych, połowę podobnych do aktywnych, by wymusić wskazanie drobnej cechy przez model.
@@ -208,7 +228,7 @@ Na końcu autorzy łączą nazwy o podobieństwie powyżej 0,98 w jedno pojęcie
 
 ---
 
-<!-- 10 -->
+<!-- 11 -->
 # Krok 3. Oznaczenie zdjęć
 
 Nazwa neuronu to tylko hipoteza o tym, na co on reaguje. Dlatego autorzy nie używają neuronów SAE wprost jako pojęć. GPT-4.1 oznacza zdjęcia treningowe, a nowa warstwa pojęć uczy się na tych etykietach.
@@ -225,7 +245,7 @@ Siatka jest tańsza, ale mniej dokładna. Na CUB trafność oznaczeń wynosi 69,
 
 ---
 
-<!-- 11 -->
+<!-- 12 -->
 # Krok 4. Trening modelu z wąskim gardłem
 
 Model ma trzy części. Zamrożona sieć zamienia zdjęcie na wektor liczb. Warstwa pojęć (CBL) przewiduje z niego, czy występuje każde pojęcie, i uczy się na etykietach z kroku 3, pomijając pary bez etykiety. Rzadki klasyfikator liniowy wybiera klasę wyłącznie na podstawie wartości pojęć.
@@ -243,7 +263,7 @@ Kara w klasyfikatorze zeruje większość wag, więc każda klasa zależy od kil
 
 ---
 
-<!-- 12 -->
+<!-- 13 -->
 # NCC, czyli uczciwe porównanie modeli
 
 Im więcej pojęć klasyfikator może użyć, tym wyższą ma dokładność, ale rośnie też wyciek, a wyjaśnienia robią się długie. Modele trzeba więc porównywać przy takiej samej liczbie pojęć w decyzji.
@@ -254,7 +274,7 @@ NCC (Number of Contributing Concepts) liczy dla każdej decyzji, ile pojęć pok
 
 ---
 
-<!-- 13 -->
+<!-- 14 -->
 # Wyniki i ograniczenia metody M-CBM
 
 - **Trafność CUB-200** ($NCC=5$): **76.7%** (Black-Box) vs **73.7%** (**M-CBM**) vs **69.1%** (VLG-CBM).
@@ -278,7 +298,7 @@ Notatki:
 
 ---
 
-<!-- 14 -->
+<!-- 15 -->
 # Co chcemy sprawdzić w projekcie?
 
 <div class="grid-3">
