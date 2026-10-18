@@ -252,7 +252,25 @@ Siatka jest tańsza, ale mniej dokładna. Na CUB trafność oznaczeń wynosi 69,
 
 Model ma trzy części. Zamrożona sieć zamienia zdjęcie na wektor liczb. Warstwa pojęć (CBL) przewiduje z niego, czy występuje każde pojęcie, i uczy się na etykietach z kroku 3, pomijając pary bez etykiety. Rzadki klasyfikator liniowy wybiera klasę wyłącznie na podstawie wartości pojęć.
 
-Kara w klasyfikatorze zeruje większość wag, więc każda klasa zależy od kilku pojęć. Wkład pojęcia w decyzję to jego wartość pomnożona przez wagę. Poniżej wkłady dla Hooded Warbler.
+Kara w klasyfikatorze zeruje większość wag, więc każda klasa zależy od zaledwie kilku pojęć. Wkład pojęcia w decyzję to jego wartość pomnożona przez wagę.
+
+<div class="flow">
+  <div class="flow-box"><span class="flow-label">Zamrożona sieć</span>Wektor 512 liczb</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box flow-box-wide"><span class="flow-label">Warstwa pojęć (CBL)</span>Predykcja obecności pojęć</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Rzadki klasyfikator</span>Wybór klasy z kilku kluczowych pojęć</div>
+</div>
+
+---
+
+<!-- 13 -->
+# Wyjaśnienie decyzji: Hooded Warbler
+
+<div style="display: grid; grid-template-columns: 1.35fr 1fr; gap: 36px; align-items: center;">
+<div>
+
+Wkład pojęcia w decyzję to jego wartość pomnożona przez wagę. Zaledwie 5 pojęć tłumaczy ponad 95% decyzji klasyfikatora:
 
 <div class="bars">
   <div class="bar-row"><span class="bar-label">żółty ptak z czarną maską wokół oczu</span><span class="bar-track"><span class="bar-fill" style="width: 100%"></span></span><span class="bar-value">+4,80</span></div>
@@ -263,9 +281,26 @@ Kara w klasyfikatorze zeruje większość wag, więc każda klasa zależy od kil
   <div class="bar-row"><span class="bar-label">pozostałe 273 pojęcia razem</span><span class="bar-track"><span class="bar-fill bar-fill-muted" style="width: 1%"></span></span><span class="bar-value">+0,05</span></div>
 </div>
 
+</div>
+<div class="col-right">
+
+![width:440px](img/Hooded_Warbler.jpg)
+
+<p class="source" style="text-align: center; margin-top: 8px;"><em>Hooded Warbler</em> (Wilsonka żółtolica, wikipedia.org)</p>
+
+</div>
+</div>
+
+<!--
+Notatki:
+- Przykład lokalnego wyjaśnienia decyzji M-CBM dla konkretnego zdjęcia ptaka
+- 5 kluczowych pojęć (m.in. czarna maska, żółta twarz) tłumaczy ponad 95% decyzji
+- Rzadka regularyzacja: pozostałe 273 pojęcia mają łącznie znikomy wkład (+0.05)
+-->
+
 ---
 
-<!-- 13 -->
+<!-- 14 -->
 # NCC, czyli uczciwe porównanie modeli
 
 Im więcej pojęć klasyfikator może użyć, tym wyższą ma dokładność, ale rośnie też wyciek, a wyjaśnienia robią się długie. Modele trzeba więc porównywać przy takiej samej liczbie pojęć w decyzji.
@@ -276,7 +311,7 @@ NCC (Number of Contributing Concepts) liczy dla każdej decyzji, ile pojęć pok
 
 ---
 
-<!-- 14 -->
+<!-- 15 -->
 # Wyniki i ograniczenia metody M-CBM
 
 - **Trafność CUB-200** ($NCC=5$): **76.7%** (Black-Box) vs **73.7%** (**M-CBM**) vs **69.1%** (VLG-CBM).
@@ -300,7 +335,7 @@ Notatki:
 
 ---
 
-<!-- 15 -->
+<!-- 16 -->
 # Co chcemy sprawdzić w projekcie?
 
 <div class="grid-3">
