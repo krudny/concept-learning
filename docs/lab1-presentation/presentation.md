@@ -573,7 +573,7 @@ Notatki:
 <div class="card">
 <h3>Deep Residual Learning for Image Recognition</h3>
 <p class="source"><a href="https://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html">CVPR 2016</a></p>
-<p>Oryginalna praca wprowadzająca architekturę ResNet — backbone, który trenujemy i analizujemy w naszym projekcie.</p>
+<p>Oryginalna praca wprowadzająca architekturę ResNet, którą trenujemy i analizujemy w naszym projekcie.</p>
 </div>
 
 </div>
