@@ -26,12 +26,12 @@ Notatki:
 -->
 
 ---
-
+<!-- 1 -->
 # Problem: sieć neuronowa nie wyjaśnia swoich decyzji
 
 Sieć neuronowa rozpoznaje gatunek ptaka na zdjęciu z dużą dokładnością, ale nie potrafi wyjaśnić, dlaczego wybrała właśnie ten gatunek.
 
-Decyzja wynika z działania milionów parametrów w kolejnych warstwach sieci. Pojedynczy neuron często reaguje na kilka niepowiązanych rzeczy, więc nie da się mu przypisać jednej cechy, którą człowiek mógłby nazwać.
+Decyzja wynika z milionów parametrów sieci, a pojedynczy neuron często reaguje na kilka niepowiązanych ze sobą wzorców naraz.
 
 Z zewnątrz widzimy tylko wynik. Nie wiemy, czy sieć patrzy na ptaka, czy na przypadkowy szczegół, na przykład tło zdjęcia.
 
@@ -47,18 +47,22 @@ Z zewnątrz widzimy tylko wynik. Nie wiemy, czy sieć patrzy na ptaka, czy na pr
 
 ---
 
+<!-- 2 -->
 # Dlaczego wyjaśnialność ma znaczenie
 
-**Zaufanie w zastosowaniach krytycznych.** Paper wymienia opiekę zdrowotną, autonomiczne samochody i obronność jako dziedziny, w których model musi być przejrzysty, a nie tylko dokładny.
+**Zaufanie w zastosowaniach krytycznych.** W opiece zdrowotnej, autonomicznych samochodach czy obronności model musi być przejrzysty, nie tylko dokładny.
 
-**Wykrywanie błędnych powodów.** Sieć może dać poprawny wynik z niewłaściwego powodu, na przykład rozpoznać ptaka po tle. Bez wyjaśnienia nikt tego nie zauważy.
+**Wykrywanie fałszywych korelacji.** Sieć może dać poprawny wynik z niewłaściwego powodu — np. rozpoznając ptaka po tle zamiast po nim samym.
 
-**Poprawianie błędów.** W paperze wyzerowanie jednego pojęcia zmieniło błędną diagnozę znamienia na poprawną. Gdy wiemy, która cecha zawiodła, możemy ją sprawdzić.
+**Poprawianie błędów.** Wyzerowanie jednej zawodnej cechy potrafi zmienić błędną diagnozę na poprawną.
 
-**Odpowiedzialność za decyzję.** Osoba korzystająca z wyniku, na przykład lekarz, musi umieć go uzasadnić przed pacjentem.
+**Odpowiedzialność za decyzję.** Lekarz korzystający z wyniku musi umieć go uzasadnić pacjentowi.
 
 ---
+<!-- skrócone: każdy z 4 punktów zmieścił się w jednym zdaniu zamiast dwóch - usunięte: "Artykuł wymienia" (zbędne odwołanie do źródła), "Bez wyjaśnienia nikt tego nie zauważy" (domyślne z kontekstu), "W artykule" + powtórzone podsumowanie w pkt. 3, uogólnienie "Osoba korzystająca z wyniku" zastąpione konkretem "Lekarz" -->
+<!-- skrócone, brak możliwości przypisania pojedynczej cechy neuronowi opisany później -->
 
+<!-- 3 -->
 # Dwa sposoby wyjaśniania decyzji sieci
 
 Metody wyjaśniania dzielą się na dwie grupy, zależnie od tego, czy wyjaśniamy gotową sieć, czy budujemy sieć, która wyjaśnia się sama.
@@ -79,11 +83,12 @@ Metody wyjaśniania dzielą się na dwie grupy, zależnie od tego, czy wyjaśnia
 
 ---
 
+<!-- 4 -->
 # Post-hoc, czyli wyjaśnianie po fakcie
 
 **Jak działa?** Sieć jest już wytrenowana i zostaje bez zmian. Mapa atrybucji (ang. Saliency) sprawdza, jak zmiana pikseli wpływa na wynik wybranej klasy, i zaznacza je na zdjęciu jako mapę ciepła.
 
-**Co daje?** Zaznacza obszary zdjęcia, które najmocniej podniosły wynik klasy. To daje nam wiedzę o tym co sieć neuronowa najbardziej wzięła pod uwagę. 
+**Co daje?** Pokazuje, które obszary zdjęcia najmocniej podniosły wynik klasy — czyli na co sieć zwróciła największą uwagę.
 
 **Ograniczenie.** Mapa nie mówi, czy zaznaczony obszar oznacza dziób, kolor czy teksturę. Nie wiemy, jakie pojęcie sieć rozpoznała.
 
@@ -99,9 +104,10 @@ Metody wyjaśniania dzielą się na dwie grupy, zależnie od tego, czy wyjaśnia
 
 ---
 
+<!-- 5 -->
 # Ante-hoc, czyli CBM z nazwanych pojęć
 
-**Jak działa?** CBM dzieli klasyfikator na dwie części. Warstwa pojęć (ang. Concept Bottleneck Layer) przewiduje z obrazu, które z nazwanych pojęć występują. Rzadki klasyfikator liniowy wybiera klasę wyłącznie na podstawie wartości tych pojęć. Cała informacja o obrazie musi przejść przez wąskie gardło, czyli listę pojęć.
+**Jak działa?** CBM dzieli model na dwie części: warstwę pojęć (ang. Concept Bottleneck Layer), która przewiduje z obrazu, które z nazwanych pojęć występują, oraz rzadki klasyfikator liniowy, który wybiera klasę wyłącznie na ich podstawie. Cała informacja o obrazie musi przejść przez to wąskie gardło, czyli listę pojęć.
 
 **Co daje?** Decyzję można odczytać wprost, bo wkład pojęcia w klasę to jego wartość pomnożona przez wagę.
 
@@ -118,7 +124,7 @@ Metody wyjaśniania dzielą się na dwie grupy, zależnie od tego, czy wyjaśnia
 ---
 
 <!-- _class: two-columns -->
-
+<!-- 6 -->
 # Co jest nie tak z CBM?
 
 <div>
@@ -132,40 +138,42 @@ Dotychczasowe metody biorą pojęcia od ekspertów, z grafów wiedzy (baz powią
 
 ## Problem 2. Wyciek informacji
 
-Wyciek oznacza, że CBM jest dokładny dzięki ukrytym wzorcom w wartościach pojęć, a nie dzięki ich znaczeniu. Pojęcie oznaczone tylko na obrazach jednej klasy działa jak etykieta tej klasy. Z frazami typu "bird pizza" zamiast nazw pojęć VLG-CBM dorównuje dokładnością oryginalnej sieci przy średnio około 1,5 pojęcia na decyzję. Model wygląda na czytelny, ale w praktyce dalej jest czarną skrzynką.
+Wyciek oznacza, że CBM jest dokładny dzięki ukrytym wzorcom w wartościach pojęć, a nie dzięki ich znaczeniu — np. pojęcie oznaczone tylko na obrazach jednej klasy działa jak jej etykieta. VLG-CBM, z losowymi frazami typu "bird pizza" zamiast nazw pojęć, dorównuje dokładnością oryginalnej sieci przy średnio około 1,5 pojęcia na decyzję. Model wygląda na czytelny, ale w praktyce dalej jest czarną skrzynką.
 
 </div>
 
 ---
 
+<!-- 7 -->
 # Pomysł autorów, czyli Mechanistic CBM (M-CBM)
 
-Zamiast wybierać pojęcia z góry, autorzy biorą te, których wytrenowana sieć już używa. Spodziewają się, że takie pojęcia łatwiej nauczyć i że lepiej przewidują klasę.
+Zamiast wybierać pojęcia z góry, autorzy biorą te, których wytrenowana sieć już używa. Spodziewają się, że łatwiej je nauczyć i że lepiej przewidują klasę.
 
 Metoda ma cztery kroki.
 
 <div class="flow">
-  <div class="flow-box"><span class="flow-label">Krok 1</span>Autoenkoder rzadki (SAE) rozkłada reprezentację sieci na neurony, czyli kandydatów na pojęcia</div>
+  <div class="flow-box"><span class="flow-label">Krok 1</span>Autoenkoder rzadki (SAE) rozkłada reprezentację na kandydatów na pojęcia</div>
   <div class="flow-arrow">→</div>
-  <div class="flow-box"><span class="flow-label">Krok 2</span>Model GPT-4.1 nazywa każdy neuron na podstawie zdjęć, które go najmocniej włączają</div>
+  <div class="flow-box"><span class="flow-label">Krok 2</span>Model GPT-4.1 nazywa każdy neuron na podstawie zdjęć</div>
   <div class="flow-arrow">→</div>
-  <div class="flow-box"><span class="flow-label">Krok 3</span>GPT-4.1 sprawdza, czy pojęcie występuje na zdjęciach treningowych, bo nazwa to tylko hipoteza</div>
+  <div class="flow-box"><span class="flow-label">Krok 3</span>GPT-4.1 oznacza zdjęcia treningowe</div>
   <div class="flow-arrow">→</div>
-  <div class="flow-box"><span class="flow-label">Krok 4</span>Warstwa pojęć uczy się z tych etykiet, a rzadki klasyfikator liniowy wybiera klasę</div>
+  <div class="flow-box"><span class="flow-label">Krok 4</span>Trening warstwy pojęć i klasyfikatora</div> <!-- Skróciłem te punkty, bo te wpisy są dokładniej rozwinięte na następnych slajdach-->
 </div>
 
 ---
 
+<!-- 8 -->
 # Krok 1. Wydobycie pojęć z sieci
 
-Każde zdjęcie treningowe przechodzi przez wytrenowaną sieć, która zamienia je na wektor liczb. W ResNet-18 ma on 512 liczb. Pojedyncza liczba nie odpowiada jednej cesze, bo cechy są w wektorze pomieszane, jak kolory w zmieszanej farbie.
+Każde zdjęcie treningowe przechodzi przez wytrenowaną sieć (ResNet-18), która zamienia je na wektor 512 liczb. Pojedyncza liczba nie odpowiada jednej cesze, bo cechy w wektorze są pomieszane.
 
-Autoenkoder rzadki rozkłada ten wektor na wiele prostych składników. Uczy się z dwoma celami. Ma odtworzyć wektor jak najdokładniej i włączać dla jednego zdjęcia tylko kilka neuronów. Każdy neuron SAE jest kandydatem na jedno pojęcie.
+Autoenkoder rzadki (SAE) rozkłada ten wektor na proste składniki, ucząc się jednocześnie go odtwarzać i aktywować dla jednego zdjęcia tylko kilka neuronów — każdy taki neuron to kandydat na pojęcie.
 
-Na zbiorze CUB SAE ma 512 neuronów, a dla jednego zdjęcia włącza się średnio 7,66 z nich. Neurony, które nie włączają się nigdy lub prawie nigdy, autorzy usuwają, o ile jakość spada najwyżej o około 1%. Klasyfikator zachowuje wtedy 98,41% swojej dokładności.
+<!-- Na zbiorze CUB SAE ma 512 neuronów, a dla jednego zdjęcia włącza się średnio 7,66 z nich. Neurony, które nie włączają się nigdy lub prawie nigdy, autorzy usuwają, o ile jakość spada najwyżej o około 1%.  usunięte - Powtórzenie treści z diagramu--> 
 
 <div class="flow">
-  <div class="flow-box"><span class="flow-label">Wejście</span>Zdjęcie ptaka</div>
+  <div class="flow-box"><span class="flow-label">Wejście</span>Zdjęcie ptaka (zbiór CUB-200)</div>
   <div class="flow-arrow">→</div>
   <div class="flow-box"><span class="flow-label">Sieć</span>Wektor 512 liczb</div>
   <div class="flow-arrow">→</div>
@@ -179,9 +187,10 @@ Na zbiorze CUB SAE ma 512 neuronów, a dla jednego zdjęcia włącza się średn
 
 ---
 
+<!-- 9 -->
 # Krok 2. Nazwanie pojęć
 
-Dla każdego neuronu SAE autorzy wybierają 10 zdjęć, które włączają go najmocniej, i nakładają na nie mapy ciepła. Dodają 10 zdjęć, które go nie włączają. Połowa z nich jest losowa, a połowa to zdjęcia najbardziej podobne do aktywnych, żeby model musiał wskazać drobną cechę.
+Dla każdego neuronu SAE autorzy wybierają 10 zdjęć, które włączają go najmocniej, i nakładają na nie mapy ciepła. Dodają też 10 zdjęć nieaktywnych — połowę losowych, połowę podobnych do aktywnych, by wymusić wskazanie drobnej cechy przez model.
 
 GPT-4.1 dostaje te zdjęcia i pytanie "What is this neuron looking for?". Odpowiada krótką nazwą, na przykład "black mask around yellow face". Nie może użyć nazwy klasy. Jeśli to zrobi, pytanie jest ponawiane.
 
@@ -199,13 +208,14 @@ Na końcu autorzy łączą nazwy o podobieństwie powyżej 0,98 w jedno pojęcie
 
 ---
 
+<!-- 10 -->
 # Krok 3. Oznaczenie zdjęć
 
 Nazwa neuronu to tylko hipoteza o tym, na co on reaguje. Dlatego autorzy nie używają neuronów SAE wprost jako pojęć. GPT-4.1 oznacza zdjęcia treningowe, a nowa warstwa pojęć uczy się na tych etykietach.
 
-Dla każdego pojęcia wybierają do 1000 zdjęć. Połowa to zdjęcia, które mocno włączają neuron (powyżej 95. percentyla aktywacji), a połowa to zdjęcia nieaktywne. Obie grupy obejmują równomiernie wszystkie klasy, żeby pojęcie nie związało się z jedną klasą.
+Połowa zdjęć wybieranych dla każdego pojęcia mocno włącza neuron (powyżej 95. percentyla aktywacji), a połowa to zdjęcia nieaktywne. Obie grupy obejmują równomiernie wszystkie klasy, żeby pojęcie nie związało się z jedną klasą.
 
-Siatka jest tańsza, ale mniej dokładna. Na CUB trafność oznaczeń wynosi 69,46% przy siatce i 74,00% przy pojedynczych zdjęciach, które wymagają jednak 25 razy więcej zapytań.
+Siatka jest tańsza, ale mniej dokładna. Na CUB trafność oznaczeń wynosi 69,46% przy siatce i 74,00% przy etykietowaniu pojedynczych zdjęć, co wymaga jednak 25 razy więcej zapytań.
 
 <div class="stat-grid">
   <div class="stat-box"><span class="stat-num">1000</span><span class="stat-label">zdjęć na jedno pojęcie</span></div>
@@ -215,6 +225,7 @@ Siatka jest tańsza, ale mniej dokładna. Na CUB trafność oznaczeń wynosi 69,
 
 ---
 
+<!-- 11 -->
 # Krok 4. Trening modelu z wąskim gardłem
 
 Model ma trzy części. Zamrożona sieć zamienia zdjęcie na wektor liczb. Warstwa pojęć (CBL) przewiduje z niego, czy występuje każde pojęcie, i uczy się na etykietach z kroku 3, pomijając pary bez etykiety. Rzadki klasyfikator liniowy wybiera klasę wyłącznie na podstawie wartości pojęć.
@@ -232,21 +243,25 @@ Kara w klasyfikatorze zeruje większość wag, więc każda klasa zależy od kil
 
 ---
 
+<!-- 12 -->
 # NCC, czyli uczciwe porównanie modeli
 
 Im więcej pojęć klasyfikator może użyć, tym wyższą ma dokładność, ale rośnie też wyciek, a wyjaśnienia robią się długie. Modele trzeba więc porównywać przy takiej samej liczbie pojęć w decyzji.
 
-Wcześniejsza miara NEC liczy średnią liczbę niezerowych wag na klasę. Przy małej liczbie klas ogranicza ona cały słownik pojęć, bo przy 3 klasach i NEC=5 model może mieć najwyżej 15 pojęć.
+Wcześniejsza miara NEC (Number of Effective Concepts), licząca średnią liczbę niezerowych wag na klasę, przy małej liczbie klas ogranicza cały słownik pojęć — np. przy 3 klasach i NEC=5 model może mieć najwyżej 15 pojęć.
 
 NCC (Number of Contributing Concepts) liczy dla każdej decyzji, ile pojęć pokrywa 95% sumy wkładów, i uśrednia wynik. NCC=5 oznacza, że średnio 5 pojęć tłumaczy co najmniej 95% decyzji. Model może mieć wiele pojęć, ale pojedynczą decyzję tłumaczy kilkoma.
 
 ---
 
-# Wyniki i ograniczenia papera
+<!-- 13 -->
+# Wyniki i ograniczenia metody M-CBM
 
 - **Trafność CUB-200** ($NCC=5$): **76.7%** (Black-Box) vs **73.7%** (**M-CBM**) vs **69.1%** (VLG-CBM).
 - **Interwencja**: modyfikacja pojedynczej cechy odwraca błędną diagnozę czerniaka (ISIC 2018).
+
 - **Ograniczenia**: koszt i czas zapytań API VLM (ang. Vision-Language Model, ~0.16$ / cechę), wyzwanie przy tysiącach pojęć.
+
 
 <div class="img-center">
 
@@ -263,6 +278,7 @@ Notatki:
 
 ---
 
+<!-- 14 -->
 # Co chcemy sprawdzić w projekcie?
 
 <div class="grid-3">
