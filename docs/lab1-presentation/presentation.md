@@ -259,7 +259,9 @@ NCC (Number of Contributing Concepts) liczy dla każdej decyzji, ile pojęć pok
 
 - **Trafność CUB-200** ($NCC=5$): **76.7%** (Black-Box) vs **73.7%** (**M-CBM**) vs **69.1%** (VLG-CBM).
 - **Interwencja**: modyfikacja pojedynczej cechy odwraca błędną diagnozę czerniaka (ISIC 2018).
-- **Ograniczenia**: koszt i czas zapytań API VLM (~0.16$ / cechę), trudności ze skalowaniem przy tysiącach pojęć.
+
+- **Ograniczenia**: koszt i czas zapytań API VLM (ang. Vision-Language Model, ~0.16$ / cechę), wyzwanie przy tysiącach pojęć.
+
 
 <div class="img-center">
 
@@ -290,7 +292,7 @@ Notatki:
 <div class="card">
 <span class="badge">Pytanie 2</span>
 <h3>Porównanie metod</h3>
-<p>Która metoda daje najczytelniejszą reprezentację: <b>PCA</b>, gęsty <b>Autoenkoder</b> czy <b>SAE</b>?</p>
+<p>Która metoda daje najczytelniejszą reprezentację: <b>PCA</b> (analiza głównych składowych), gęsty <b>Autoenkoder</b> czy <b>SAE</b>?</p>
 </div>
 
 <div class="card">
@@ -310,31 +312,22 @@ Notatki:
 
 ---
 
-<!-- _class: two-columns -->
+# Wybór zbioru danych
 
-# Dane i modele bazowe
+| Zbiór | Klasy | Dane | Interpretowalność cech |
+|---|---|---|---|
+| **CUB-200-2011** | 200 (gatunki ptaków) | ~11 800 zdjęć, wysoka rozdzielczość | Wysoka — wyraziste cechy wizualne (dziób, upierzenie, skrzydła) |
+| ISIC 2018 | 7 (zmiany skórne) | ~10 000 zdjęć dermatoskopowych | Niska dla laika — cechy wymagają wiedzy medycznej |
+| CIFAR-10 | 10 (obiekty ogólne) | 60 000 zdjęć, 32×32 px | Niska — zbyt mała rozdzielczość na analizę szczegółów |
 
-<div>
-
-- **Zbiór CUB-200-2011**:
-  200 gatunków ptaków, wyraziste cechy wizualne (dziób, ubarwienie, skrzydła).
-- **Model bazowy (Backbone)**:
-  ResNet-18, ekstrakcja wektora 512 cech z warstwy `avgpool`.
-- **Środowisko obliczeniowe**:
-  PyTorch + biblioteka SAE, czas treningu SAE: **~10–20 min na GPU**.
-
-</div>
-<div class="col-right">
-
-![width:600px](img/slajd10_cub_grid.png)
-
-</div>
+Wybieramy **CUB-200-2011** — wyraziste, nazywalne cechy wizualne oraz bezpośrednia porównywalność z wynikami z artykułu (ten sam zbiór w M-CBM).
 
 <!--
 Notatki:
-- Zbiór: CUB-200-2011 (200 gatunków ptaków, bogate cechy anatomiczne)
-- Backbone: ResNet-18, ekstrakcja 512 cech z warstwy avgpool
-- Czas treningu: SAE na zamrożonych embeddingach uczy się szybko (~10-20 min na GPU)
+- Trzy kandydatury wprost z treści zadania projektowego
+- CIFAR-10 odpada przez rozdzielczość 32x32 - za mało szczegółu na cechy wizualne
+- ISIC2018 odpada bo cechy medyczne trudno ocenić bez wiedzy eksperckiej
+- CUB-200-2011 wygrywa też dlatego, że to ten sam zbiór co w artykule - łatwiej porównać wyniki
 -->
 
 ---
@@ -384,6 +377,144 @@ Notatki:
 
 ---
 
+# Słownik pojęć
+
+<div class="grid-3">
+
+<div class="card">
+<h3>ResNet</h3>
+<p>Konwolucyjna sieć neuronowa z połączeniami rezydualnymi (ang. residual connections), które ułatwiają trening głębokich warstw.</p>
+</div>
+
+<div class="card">
+<h3>PCA</h3>
+<p>Analiza głównych składowych — klasyczna metoda redukcji wymiarowości. Znajduje kierunki o największej wariancji w danych i rzutuje na nie wektor cech, bez wymuszania rzadkości czy interpretowalności pojedynczych komponentów.</p>
+</div>
+
+<div class="card">
+<h3>AE</h3>
+<p>Gęsty autoenkoder — sieć ucząca się kompresować i odtwarzać wektor cech, bez ograniczeń na rzadkość aktywacji. W przeciwieństwie do SAE aktywne są zwykle wszystkie neurony warstwy ukrytej, co utrudnia przypisanie im pojedynczych, nazwalnych pojęć.</p>
+</div>
+
+<div class="card">
+<h3>Top-K</h3>
+<p>Dla danej cechy (neuronu) wybieramy K zdjęć, które najmocniej ją aktywują. Sprawdzając te zdjęcia oceniamy, czy cecha odpowiada spójnemu pojęciu wizualnemu, np. zawsze temu samemu kolorowi upierzenia czy kształtowi dzioba.</p>
+</div>
+
+<div class="card">
+<h3>VLM</h3>
+<p>Vision-Language Model — model łączący rozumienie obrazu z językiem naturalnym (np. GPT-4.1), opisujący słowami to, co widzi na zdjęciu.</p>
+</div>
+
+</div>
+
+<!--
+Notatki:
+- Krótki słownik pojęć przed wejściem w szczegóły Kroków A-D
+- ResNet to nasz klasyfikator bazowy (Krok A), Top-K to metoda inspekcji cech (Pytanie 1, Krok C)
+- PCA i AE będą porównywane z SAE w Kroku C
+- VLM dotyczy poziomu ambitnego (automatyczne nazywanie cech)
+-->
+
+---
+
+<!-- _class: two-columns -->
+
+# Krok A. Klasyfikator bazowy i ekstrakcja cech
+
+<div>
+
+Trenujemy ResNet-18 na CUB-200-2011 jako nasz "czarnoskrzynkowy" klasyfikator bazowy — analogicznie do modelu z artykułu.
+
+Z warstwy `avgpool`, czyli ostatniej przed klasyfikatorem, wyciągamy dla każdego zdjęcia wektor 512 liczb. To reprezentacja, którą w Kroku B rozłoży autoenkoder.
+
+**Środowisko**: PyTorch, trening na GPU.
+
+</div>
+<div class="col-right">
+
+![width:600px](img/slajd10_cub_grid.png)
+
+</div>
+
+<!--
+Notatki:
+- ResNet-18 trenowany na CUB-200-2011, tak samo jak backbone w artykule
+- Embeddingi z warstwy avgpool (512 liczb na zdjęcie)
+- To wejście do Kroku B (SAE)
+-->
+
+---
+
+# Krok B. Trening Sparse Autoencodera
+
+Na zamrożonych embeddingach z Kroku A trenujemy Sparse Autoencoder (SAE). Uczy się on rekonstruować wektor 512 liczb, aktywując przy tym tylko kilka neuronów na zdjęcie — każdy aktywny neuron to kandydat na pojęcie.
+
+Jakość oceniamy dwoma miarami: błędem rekonstrukcji (MSE) oraz stopniem rzadkości aktywacji (ile neuronów włącza się średnio na zdjęcie).
+
+<div class="flow">
+  <div class="flow-box"><span class="flow-label">Wejście</span>Wektor 512 liczb (Krok A)</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">SAE</span>Rekonstrukcja + rzadka aktywacja</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Wynik</span>Kandydaci na pojęcia</div>
+</div>
+
+<!--
+Notatki:
+- SAE trenowany na zamrożonych embeddingach z Kroku A
+- Dwa cele: rekonstrukcja wektora + rzadka aktywacja
+- Ewaluacja: MSE rekonstrukcji i rzadkość (średnia liczba aktywnych neuronów)
+-->
+
+---
+
+# Krok C. Interpretowalność i porównanie metod
+
+Dla każdej cechy SAE wybieramy obrazy najmocniej ją aktywujące (Top-K) i sprawdzamy, czy odpowiadają spójnemu pojęciu wizualnemu — np. zawsze temu samemu kształtowi dzioba czy kolorowi upierzenia.
+
+Tę samą analizę powtarzamy dla PCA i klasycznego, gęstego autoenkodera, żeby ocenić, która reprezentacja daje najbardziej czytelne, monosemantyczne cechy.
+
+<div class="flow">
+  <div class="flow-box"><span class="flow-label">PCA</span>Komponenty główne</div>
+  <div class="flow-arrow">↔</div>
+  <div class="flow-box"><span class="flow-label">Gęsty AE</span>Autoenkoder bez rzadkości</div>
+  <div class="flow-arrow">↔</div>
+  <div class="flow-box"><span class="flow-label">SAE</span>Autoenkoder rzadki</div>
+</div>
+
+<!--
+Notatki:
+- Inspekcja Top-K obrazów per cecha - czy cecha jest spójna wizualnie
+- Porównanie trzech metod redukcji: PCA, gęsty AE, SAE
+- Cel: sprawdzić, która reprezentacja jest najbardziej monosemantyczna
+-->
+
+---
+
+# Krok D. Interwencja na cechach
+
+Wyzerowujemy wybraną cechę i sprawdzamy, jak zmienia się predykcja oraz pewność klasyfikatora.
+
+Jeśli wyłączenie cechy w przewidywalny sposób zmienia decyzję, to dowód, że cecha faktycznie odpowiada za rozpoznawany wzorzec wizualny, a nie jest przypadkowa.
+
+<div class="flow">
+  <div class="flow-box"><span class="flow-label">Przed</span>Cecha aktywna → predykcja X</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box flow-box-open"><span class="flow-label">Ablacja</span>Zerowanie cechy</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><span class="flow-label">Po</span>Predykcja i pewność — zmiana?</div>
+</div>
+
+<!--
+Notatki:
+- Ablacja = wyzerowanie wybranej cechy przed klasyfikatorem
+- Mierzymy zmianę predykcji i pewności (confidence)
+- Przewidywalna zmiana = dowód, że cecha realnie coś reprezentuje
+-->
+
+---
+
 # Jak ocenimy wyniki? (Ewaluacja)
 
 | Wymiar ewaluacji | Metoda / Metryka | Cel weryfikacji |
@@ -400,3 +531,50 @@ Notatki:
 - Błąd rekonstrukcji: MSE i wpływ kompresji na accuracy klasyfikatora
 - Ablacja: pomiar spadku pewności modelu po wyzerowaniu kluczowej cechy
 -->
+
+---
+
+# Literatura
+
+<div class="grid-3">
+
+<div class="card">
+<h3>Scaling and evaluating sparse autoencoders</h3>
+<p class="source"><a href="https://proceedings.iclr.cc/paper_files/paper/2025/hash/42ef3308c230942d223c411adf182c88-Abstract-Conference.html">ICLR 2025</a></p>
+<p>Analiza, jak jakość i rzadkość cech SAE skaluje się wraz z rozmiarem modelu i danych; wprowadza aktywację TopK jako alternatywę dla kary L1.</p>
+</div>
+
+<div class="card">
+<h3>A Holistic Approach to Unifying Automatic Concept Extraction and Concept Importance Estimation</h3>
+<p class="source"><a href="https://proceedings.neurips.cc/paper_files/paper/2023/hash/abf3682c9cf9245a0294a4bebe4544ff-Abstract-Conference.html">NeurIPS 2023</a></p>
+<p>Łączy automatyczne wydobywanie pojęć wizualnych z oceną ich wpływu na decyzję klasyfikatora w jedną spójną metodę.</p>
+</div>
+
+<div class="card">
+<h3>Sparse Autoencoders Learn Monosemantic Features in Vision-Language Models</h3>
+<p class="source"><a href="https://proceedings.neurips.cc/paper_files/paper/2025/hash/89e83382abeee53b932a6df62edbf9cc-Abstract-Conference.html">NeurIPS 2025</a></p>
+<p>Pokazuje, że SAE trenowane na reprezentacjach modeli wizyjno-językowych odkrywają cechy monosemantyczne, podobnie jak w modelach językowych.</p>
+</div>
+
+</div>
+
+---
+
+# Literatura (c.d.)
+
+<div class="grid-3">
+
+<div class="card">
+<h3>Interpretable and Testable Vision Features via Sparse Autoencoders</h3>
+<p class="source"><a href="https://arxiv.org/abs/2502.06755">arXiv, 2025</a></p>
+<p>Trenuje SAE na reprezentacjach modeli wizyjnych i proponuje sposób testowania, czy odkryte cechy faktycznie odpowiadają spójnym pojęciom.</p>
+</div>
+
+<div class="card">
+<h3>Deep Residual Learning for Image Recognition</h3>
+<p class="source"><a href="https://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html">CVPR 2016</a></p>
+<p>Oryginalna praca wprowadzająca architekturę ResNet — backbone, który trenujemy i analizujemy w naszym projekcie.</p>
+</div>
+
+</div>
+
