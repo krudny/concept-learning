@@ -172,6 +172,8 @@ Metoda ma cztery kroki.
 
 </div>
 
+<p class="source" style="text-align: center; margin-top: 8px;">Źródło: Antonio De Santis et al., <em>Learning Concept Bottleneck Models from Mechanistic Explanations</em>, ICLR 2026 (Figure 1)</p>
+
 <!--
 Notatki:
 - Architektura M-CBM z artykułu (ICLR 2026):
