@@ -361,9 +361,14 @@ Notatki:
 
 ---
 
-# Metody porównawcze: PCA, AE, VLM
+# Słownik pojęć
 
 <div class="grid-3">
+
+<div class="card">
+<h3>ResNet</h3>
+<p>Konwolucyjna sieć neuronowa z połączeniami rezydualnymi (ang. residual connections), które ułatwiają trening głębokich warstw.</p>
+</div>
 
 <div class="card">
 <h3>PCA</h3>
@@ -376,8 +381,13 @@ Notatki:
 </div>
 
 <div class="card">
+<h3>Top-K</h3>
+<p>Dla danej cechy (neuronu) wybieramy K zdjęć, które najmocniej ją aktywują. Sprawdzając te zdjęcia oceniamy, czy cecha odpowiada spójnemu pojęciu wizualnemu, np. zawsze temu samemu kolorowi upierzenia czy kształtowi dzioba.</p>
+</div>
+
+<div class="card">
 <h3>VLM</h3>
-<p>Vision-Language Model — model łączący rozumienie obrazu z językiem naturalnym (np. GPT-4.1), opisujący słowami to, co widzi na zdjęciu. W wersji ambitnej projektu mógłby automatycznie nazywać cechy odkryte przez SAE.</p>
+<p>Vision-Language Model — model łączący rozumienie obrazu z językiem naturalnym (np. GPT-4.1), opisujący słowami to, co widzi na zdjęciu.</p>
 </div>
 
 </div>
@@ -385,6 +395,7 @@ Notatki:
 <!--
 Notatki:
 - Krótki słownik pojęć przed wejściem w szczegóły Kroków A-D
+- ResNet to nasz klasyfikator bazowy (Krok A), Top-K to metoda inspekcji cech (Pytanie 1, Krok C)
 - PCA i AE będą porównywane z SAE w Kroku C
 - VLM dotyczy poziomu ambitnego (automatyczne nazywanie cech)
 -->
