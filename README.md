@@ -31,6 +31,8 @@ uv run --extra cu128 python -m concept_learning.scripts.download_cub
 
 Wszystkie wyniki trafiają do `outputs/<etap>/<nazwa_runu_z_datą>/`. Hiperparametry są w `configs/cub.json`.
 
+Jednostki ukryte SAE (w opisie zadania „latenty”) nazywamy w projekcie i w kodzie **neuronami SAE** (`neuron`).
+
 1. Fine-tuning ResNet-18 (wagi ImageNet) na CUB. Zapisuje `model.pt`, krzywe uczenia i accuracy na teście:
 
    ```bash
@@ -45,16 +47,16 @@ Wszystkie wyniki trafiają do `outputs/<etap>/<nazwa_runu_z_datą>/`. Hiperparam
 
    Zamiast własnego modelu można użyć modelu autorów M-CBM: `--backbone resnet18_cub_pytorchcv` (bez `--checkpoint`).
 
-3. Sparse Autoencoder na embeddingach, z przycinaniem rzadko aktywnych latentów:
+3. Sparse Autoencoder na embeddingach, z przycinaniem rzadko aktywnych neuronów SAE:
 
    ```bash
    uv run --extra cu128 python -m concept_learning.scripts.train_sae --config configs/cub.json --activation-dir outputs/activations/<RUN>
    ```
 
-4. Wizualizacja Top-K: `notebooks/topk_latents.ipynb` (domyślnie bierze najnowszy run z `outputs/sae/`):
+4. Wizualizacja Top-K: `notebooks/topk_neurons.ipynb` (domyślnie bierze najnowszy run z `outputs/sae/`):
 
    ```bash
-   uv run --extra cu128 jupyter lab notebooks/topk_latents.ipynb
+   uv run --extra cu128 jupyter lab notebooks/topk_neurons.ipynb
    ```
 
    Notebook commitujemy razem z wynikami, żeby galeria była widoczna na GitHubie.

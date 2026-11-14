@@ -13,7 +13,7 @@ from concept_learning import data
 from concept_learning.models import wrap_torchvision_resnet
 from concept_learning.sae import SparseAutoencoder, sae_loss
 from concept_learning.scripts import extract_activations, train_classifier, train_sae
-from concept_learning.topk import LatentExplorer
+from concept_learning.topk import NeuronExplorer
 
 N_CLASSES = 4
 TRAIN_PER_CLASS = 6
@@ -92,7 +92,7 @@ def test_pipeline_end_to_end(fake_cub, tmp_path):
     assert train["features"].shape == (N_CLASSES * TRAIN_PER_CLASS * 3 // 4, 512)
     assert len(train["image_names"]) == len(train["labels"])
 
-    explorer = LatentExplorer(tmp_path / "sae", device="cpu")
-    latent = explorer.latents_by_frequency()[0]
-    fig = explorer.plot_latent(latent, k=4, hist_top=8)
+    explorer = NeuronExplorer(tmp_path / "sae", device="cpu")
+    neuron = explorer.neurons_by_frequency()[0]
+    fig = explorer.plot_neuron(neuron, k=4, hist_top=8)
     assert len(fig.axes) == 5

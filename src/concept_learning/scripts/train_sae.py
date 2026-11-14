@@ -54,7 +54,7 @@ def run_epoch(sae, features, batch_size, l1_coefficient, optimizer=None, generat
 
 
 @torch.no_grad()
-def unit_active_counts(sae, features):
+def neuron_active_counts(sae, features):
     return (sae.encode(features) > 0).sum(dim=0).cpu()
 
 
@@ -77,9 +77,9 @@ def recovered_metrics(sae, head, features, labels, kept_mask):
 
 
 def run_pruning(sae, head, train_counts, val_features, val_labels, tolerance, min_active_images):
-    """Drop rarely-firing units at the highest activation-count threshold that keeps the recovered CE loss within tolerance."""
-    total_units = train_counts.numel()
-    baseline_loss, baseline_acc = recovered_metrics(sae, head, val_features, val_labels, torch.ones(total_units, dtype=torch.bool))
+    """Drop rarely-firing SAE neurons at the highest activation-count threshold that keeps the recovered CE loss within tolerance."""
+    total_neurons = train_counts.numel()
+    baseline_loss, baseline_acc = recovered_metrics(sae, head, val_features, val_labels, torch.ones(total_neurons, dtype=torch.bool))
 
     min_threshold = int(min_active_images) - 1
     max_count = int(train_counts.max())
@@ -104,8 +104,8 @@ def run_pruning(sae, head, train_counts, val_features, val_labels, tolerance, mi
         curve.append(
             {
                 "threshold": threshold,
-                "kept_units": int(kept_mask.sum()),
-                "pruned_units": int(total_units - kept_mask.sum()),
+                "kept_neurons": int(kept_mask.sum()),
+                "pruned_neurons": int(total_neurons - kept_mask.sum()),
                 "recovered_loss": recovered_loss,
                 "recovered_loss_drop": loss_drop,
                 "recovered_accuracy": recovered_acc,
@@ -119,9 +119,9 @@ def run_pruning(sae, head, train_counts, val_features, val_labels, tolerance, mi
 
     kept_indices = torch.nonzero(selected["kept_mask"]).squeeze(1)
     summary = {
-        "total_units": total_units,
-        "kept_units": kept_indices.numel(),
-        "pruned_units": total_units - kept_indices.numel(),
+        "total_neurons": total_neurons,
+        "kept_neurons": kept_indices.numel(),
+        "pruned_neurons": total_neurons - kept_indices.numel(),
         "selected_activation_count_threshold": selected["threshold"],
         "min_active_images": int(min_active_images),
         "ce_drop_tolerance": tolerance,
@@ -150,8 +150,8 @@ def plot_training_curves(path, history):
     plt.close(fig)
 
 
-def plot_feature_density(path, unit_counts, n_samples, selected_threshold):
-    counts = unit_counts.numpy()
+def plot_feature_density(path, neuron_counts, n_samples, selected_threshold):
+    counts = neuron_counts.numpy()
     log_density = np.log10(np.clip(counts / n_samples, 1e-8, None))
     dead = counts == 0
     low = (counts <= selected_threshold) & ~dead
@@ -166,7 +166,7 @@ def plot_feature_density(path, unit_counts, n_samples, selected_threshold):
         label=["Dead", "Pruned / low density", "Kept"],
     )
     plt.xlabel("log10(feature density)")
-    plt.ylabel("Units")
+    plt.ylabel("SAE neurons")
     plt.title("SAE feature density on the training split")
     plt.legend()
     plt.grid(True)
@@ -180,7 +180,7 @@ def plot_pruning_curve(path, curve, selected_threshold):
     series = [
         ("recovered_loss", "Recovered CE loss"),
         ("recovered_accuracy", "Recovered accuracy"),
-        ("kept_units", "SAE units kept"),
+        ("kept_neurons", "SAE neurons kept"),
     ]
     fig, axes = plt.subplots(1, 3, figsize=(15, 4))
     for axis, (key, title) in zip(axes, series):
@@ -212,8 +212,8 @@ def main(argv=None):
     train_features, val_features, val_labels = train_features.to(device), val_features.to(device), val_labels.to(device)
 
     input_dim = train_features.shape[1]
-    latent_dim = int(input_dim * config["sae_expansion_factor"])
-    sae = SparseAutoencoder(input_dim, latent_dim).to(device)
+    n_neurons = int(input_dim * config["sae_expansion_factor"])
+    sae = SparseAutoencoder(input_dim, n_neurons).to(device)
     optimizer = torch.optim.Adam(sae.parameters(), lr=config["sae_learning_rate"])
     generator = torch.Generator().manual_seed(config["seed"])
     batch_size, l1 = config["sae_batch_size"], config["sae_l1_coefficient"]
@@ -243,19 +243,19 @@ def main(argv=None):
     save_sae(run_dir / "sae.pt", sae, {"best_epoch": best_epoch})
 
     head = load_backbone(activation_info["backbone"], activation_info["checkpoint"], device).head
-    unit_counts = unit_active_counts(sae, train_features)
+    neuron_counts = neuron_active_counts(sae, train_features)
     kept_indices, curve, pruning_summary = run_pruning(
-        sae, head, unit_counts, val_features, val_labels, config["sae_ce_drop_tolerance"], config["sae_min_active_images"]
+        sae, head, neuron_counts, val_features, val_labels, config["sae_ce_drop_tolerance"], config["sae_min_active_images"]
     )
     torch.save(kept_indices, run_dir / "kept_indices.pt")
-    torch.save(unit_counts, run_dir / "unit_active_counts.pt")
+    torch.save(neuron_counts, run_dir / "neuron_active_counts.pt")
     with (run_dir / "pruning_curve.csv").open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=list(curve[0]))
         writer.writeheader()
         writer.writerows(curve)
 
     plot_training_curves(run_dir / "plots" / "training_curves.png", history)
-    plot_feature_density(run_dir / "plots" / "feature_density.png", unit_counts, len(train_features), pruning_summary["selected_activation_count_threshold"])
+    plot_feature_density(run_dir / "plots" / "feature_density.png", neuron_counts, len(train_features), pruning_summary["selected_activation_count_threshold"])
     plot_pruning_curve(run_dir / "plots" / "pruning_curve.png", curve, pruning_summary["selected_activation_count_threshold"])
 
     save_json(run_dir / "history.json", history)
@@ -263,7 +263,7 @@ def main(argv=None):
         run_dir / "metrics.json",
         {
             "input_dim": input_dim,
-            "latent_dim": latent_dim,
+            "n_neurons": n_neurons,
             "epochs_trained": len(history),
             "best_epoch": best_epoch,
             "best_val_total_loss": best_val_loss,
@@ -276,7 +276,7 @@ def main(argv=None):
     )
     save_json(run_dir / "run_info.json", {"activation_dir": str(activation_dir), "config": config, "device": str(device)})
     print(f"Best epoch {best_epoch}: val total loss {best_val_loss:.6f}")
-    print(f"Pruning kept {pruning_summary['kept_units']}/{pruning_summary['total_units']} units at threshold {pruning_summary['selected_activation_count_threshold']}.")
+    print(f"Pruning kept {pruning_summary['kept_neurons']}/{pruning_summary['total_neurons']} SAE neurons at threshold {pruning_summary['selected_activation_count_threshold']}.")
 
 
 if __name__ == "__main__":

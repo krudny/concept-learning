@@ -23,8 +23,8 @@ def latest_run(kind):
     return runs[-1]
 
 
-class LatentExplorer:
-    """Top-K training images and concept heatmaps for the units of a trained SAE."""
+class NeuronExplorer:
+    """Top-K training images and concept heatmaps for the neurons of a trained SAE."""
 
     def __init__(self, sae_dir, device=None):
         self.sae_dir = Path(sae_dir)
@@ -36,7 +36,7 @@ class LatentExplorer:
         self.sae = load_sae(self.sae_dir / "sae.pt", self.device)
         self.backbone = load_backbone(self.activation_info["backbone"], self.activation_info["checkpoint"], self.device)
         self.kept_indices = torch.load(self.sae_dir / "kept_indices.pt").tolist()
-        self.unit_counts = torch.load(self.sae_dir / "unit_active_counts.pt")
+        self.neuron_counts = torch.load(self.sae_dir / "neuron_active_counts.pt")
 
         train = torch.load(activation_dir / "activations_train.pt")
         self.labels = train["labels"]
@@ -53,24 +53,24 @@ class LatentExplorer:
     def n_images(self):
         return len(self.image_names)
 
-    def latents_by_frequency(self):
-        return sorted(self.kept_indices, key=lambda unit: -int(self.unit_counts[unit]))
+    def neurons_by_frequency(self):
+        return sorted(self.kept_indices, key=lambda neuron: -int(self.neuron_counts[neuron]))
 
-    def top_images(self, latent, k):
-        values, indices = self.activations[:, latent].topk(k)
+    def top_images(self, neuron, k):
+        values, indices = self.activations[:, neuron].topk(k)
         positive = values > 0
         return indices[positive].tolist(), values[positive].tolist()
 
     @torch.no_grad()
-    def concept_maps(self, images, latent):
-        """Per-location projection of the backbone's last feature map onto the latent's decoder direction."""
+    def concept_maps(self, images, neuron):
+        """Per-location projection of the backbone's last feature map onto the SAE neuron's decoder direction."""
         batch = torch.stack([self._preprocess(image) for image in images]).to(self.device)
         fmaps = self.backbone.feature_map(batch)
-        direction = self.sae.decoder_direction(latent).reshape(1, -1, 1, 1)
+        direction = self.sae.decoder_direction(neuron).reshape(1, -1, 1, 1)
         return F.relu((fmaps * direction).sum(dim=1)).cpu()
 
-    def heatmap_overlays(self, images, latent):
-        maps = self.concept_maps(images, latent)
+    def heatmap_overlays(self, images, neuron):
+        maps = self.concept_maps(images, neuron)
         threshold = 0.5 * maps.amax(dim=(1, 2)).mean()
         overlays = []
         for image, concept_map in zip(images, maps):
@@ -80,16 +80,16 @@ class LatentExplorer:
             overlays.append(0.3 * shown + 0.7 * shown * mask)
         return overlays
 
-    def class_counts(self, latent, top_n):
-        indices, _ = self.top_images(latent, top_n)
+    def class_counts(self, neuron, top_n):
+        indices, _ = self.top_images(neuron, top_n)
         return Counter(self.class_names[int(self.labels[i])] for i in indices)
 
-    def plot_latent(self, latent, k=10, hist_top=50, hist_classes=10, heatmap=True):
-        indices, values = self.top_images(latent, k)
+    def plot_neuron(self, neuron, k=10, hist_top=50, hist_classes=10, heatmap=True):
+        indices, values = self.top_images(neuron, k)
         if not indices:
-            raise ValueError(f"Latent {latent} never fires on the training split.")
+            raise ValueError(f"SAE neuron {neuron} never fires on the training split.")
         images = [self.dataset.load_image_by_name(self.image_names[i]) for i in indices]
-        shown = self.heatmap_overlays(images, latent) if heatmap else [self._display(image) for image in images]
+        shown = self.heatmap_overlays(images, neuron) if heatmap else [self._display(image) for image in images]
 
         image_rows = math.ceil(len(images) / IMAGES_PER_ROW)
         fig = plt.figure(figsize=(3 * IMAGES_PER_ROW, 3.4 * image_rows + 3))
@@ -100,14 +100,14 @@ class LatentExplorer:
             axis.set_title(f"{textwrap.fill(self.class_names[int(self.labels[index])], 22)}\nact = {value:.3f}", fontsize=9)
             axis.axis("off")
 
-        counts = self.class_counts(latent, hist_top).most_common(hist_classes)
+        counts = self.class_counts(neuron, hist_top).most_common(hist_classes)
         hist_axis = fig.add_subplot(grid[image_rows, :])
         hist_axis.barh([name for name, _ in reversed(counts)], [count for _, count in reversed(counts)])
-        n_top = min(hist_top, int(self.unit_counts[latent]))
+        n_top = min(hist_top, int(self.neuron_counts[neuron]))
         hist_axis.set_title(f"Most common classes among the top {n_top} activating images", fontsize=10)
         hist_axis.set_xlabel("Images")
 
-        fires = int(self.unit_counts[latent])
-        fig.suptitle(f"SAE latent {latent}: fires on {fires} / {self.n_images} training images ({fires / self.n_images:.1%})", fontsize=13)
+        fires = int(self.neuron_counts[neuron])
+        fig.suptitle(f"SAE neuron {neuron}: fires on {fires} / {self.n_images} training images ({fires / self.n_images:.1%})", fontsize=13)
         fig.tight_layout()
         return fig
