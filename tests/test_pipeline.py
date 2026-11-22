@@ -12,7 +12,7 @@ from torchvision import models
 from concept_learning import data
 from concept_learning.models import wrap_torchvision_resnet
 from concept_learning.sae import SparseAutoencoder, sae_loss
-from concept_learning.scripts import extract_activations, train_classifier, train_sae
+from concept_learning.scripts import extract_activations, sweep_sae, train_classifier, train_sae
 from concept_learning.topk import NeuronExplorer
 
 N_CLASSES = 4
@@ -96,3 +96,8 @@ def test_pipeline_end_to_end(fake_cub, tmp_path):
     neuron = explorer.neurons_by_frequency()[0]
     fig = explorer.plot_neuron(neuron, k=4, hist_top=8)
     assert len(fig.axes) == 5
+
+    sweep_sae.main([*common, "--activation-dir", str(tmp_path / "act"), "--output-dir", str(tmp_path / "sweep"), "--l1", "0.01", "0.001"])
+    summary = json.loads((tmp_path / "sweep" / "summary.json").read_text())
+    assert [row["l1_coefficient"] for row in summary] == [0.001, 0.01]
+    assert (tmp_path / "sweep" / "l1_0.01" / "sae.pt").exists()

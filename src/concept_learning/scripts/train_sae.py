@@ -196,16 +196,12 @@ def plot_pruning_curve(path, curve, selected_threshold):
     plt.close(fig)
 
 
-def main(argv=None):
-    args = parse_args(argv)
-    config = load_config(args.config)
+def train(config, activation_dir, run_dir, device):
+    """Train, prune and plot one SAE into an existing run_dir. Returns the metrics saved to metrics.json."""
     set_seed(config["seed"])
-    device = resolve_device(args.device)
-    activation_dir = Path(args.activation_dir).resolve()
+    activation_dir = Path(activation_dir).resolve()
     activation_info = load_json(activation_dir / "run_info.json")
-    run_dir = new_run_dir(args.output_dir, "sae", f"sae_{activation_info['backbone']}")
     (run_dir / "plots").mkdir()
-    print(f"Saving SAE run to {run_dir}")
 
     train_features, _ = load_split(activation_dir, "train")
     val_features, val_labels = load_split(activation_dir, "val")
@@ -258,25 +254,33 @@ def main(argv=None):
     plot_feature_density(run_dir / "plots" / "feature_density.png", neuron_counts, len(train_features), pruning_summary["selected_activation_count_threshold"])
     plot_pruning_curve(run_dir / "plots" / "pruning_curve.png", curve, pruning_summary["selected_activation_count_threshold"])
 
+    metrics = {
+        "input_dim": input_dim,
+        "n_neurons": n_neurons,
+        "epochs_trained": len(history),
+        "best_epoch": best_epoch,
+        "best_val_total_loss": best_val_loss,
+        "train_reconstruction_loss": final_train["reconstruction_loss"],
+        "val_reconstruction_loss": final_val["reconstruction_loss"],
+        "train_avg_l0": final_train["avg_l0"],
+        "val_avg_l0": final_val["avg_l0"],
+        "pruning": pruning_summary,
+    }
     save_json(run_dir / "history.json", history)
-    save_json(
-        run_dir / "metrics.json",
-        {
-            "input_dim": input_dim,
-            "n_neurons": n_neurons,
-            "epochs_trained": len(history),
-            "best_epoch": best_epoch,
-            "best_val_total_loss": best_val_loss,
-            "train_reconstruction_loss": final_train["reconstruction_loss"],
-            "val_reconstruction_loss": final_val["reconstruction_loss"],
-            "train_avg_l0": final_train["avg_l0"],
-            "val_avg_l0": final_val["avg_l0"],
-            "pruning": pruning_summary,
-        },
-    )
+    save_json(run_dir / "metrics.json", metrics)
     save_json(run_dir / "run_info.json", {"activation_dir": str(activation_dir), "config": config, "device": str(device)})
     print(f"Best epoch {best_epoch}: val total loss {best_val_loss:.6f}")
     print(f"Pruning kept {pruning_summary['kept_neurons']}/{pruning_summary['total_neurons']} SAE neurons at threshold {pruning_summary['selected_activation_count_threshold']}.")
+    return metrics
+
+
+def main(argv=None):
+    args = parse_args(argv)
+    activation_dir = Path(args.activation_dir).resolve()
+    backbone = load_json(activation_dir / "run_info.json")["backbone"]
+    run_dir = new_run_dir(args.output_dir, "sae", f"sae_{backbone}")
+    print(f"Saving SAE run to {run_dir}")
+    train(load_config(args.config), activation_dir, run_dir, resolve_device(args.device))
 
 
 if __name__ == "__main__":

@@ -53,6 +53,14 @@ Jednostki ukryte SAE (w opisie zadania „latenty”) nazywamy w projekcie i w k
    uv run --extra cu128 python -m concept_learning.scripts.train_sae --config configs/cub.json --activation-dir outputs/activations/<RUN>
    ```
 
+   Domyślny współczynnik L1 (`sae_l1_coefficient`) pochodzi z artykułu i był dobrany pod embeddingi modelu autorów. Dla własnego klasyfikatora warto najpierw przejrzeć kilka wartości (`sae_l1_sweep`, albo `--l1 0.002 0.004 ...`) i wpisać do configu tę, która daje rzadkość bliską artykułowi (L0 ≈ 7,66) bez dużego spadku recovered loss / accuracy:
+
+   ```bash
+   uv run --extra cu128 python -m concept_learning.scripts.sweep_sae --config configs/cub.json --activation-dir outputs/activations/<RUN>
+   ```
+
+   Wyniki trafiają do `outputs/sae_sweep/<RUN>/`: `summary.csv`, wykres `sweep.png` i pełny run SAE dla każdej wartości (`l1_<wartość>/`), który można też otworzyć w notebooku, ustawiając `SAE_DIR` na jego ścieżkę.
+
 4. Wizualizacja Top-K: `notebooks/topk_neurons.ipynb` (domyślnie bierze najnowszy run z `outputs/sae/`):
 
    ```bash
