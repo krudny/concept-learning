@@ -16,10 +16,18 @@ from concept_learning.utils import OUTPUTS, load_json, resolve_device
 IMAGES_PER_ROW = 5
 
 
-def latest_run(kind):
-    runs = sorted((p for p in (OUTPUTS / kind).iterdir() if p.is_dir()), key=lambda p: p.stat().st_mtime)
+def run_backbone(run_dir):
+    """Backbone name from a `<prefix>_<backbone>_<YYYYmmdd>_<HHMMSS>` run directory."""
+    return Path(run_dir).name.rsplit("_", 2)[0].split("_", 1)[1]
+
+
+def latest_run(kind, backbone=None):
+    runs = sorted(
+        (p for p in (OUTPUTS / kind).iterdir() if p.is_dir() and (backbone is None or run_backbone(p) == backbone)),
+        key=lambda p: p.stat().st_mtime,
+    )
     if not runs:
-        raise FileNotFoundError(f"No runs in {OUTPUTS / kind}")
+        raise FileNotFoundError(f"No runs in {OUTPUTS / kind}" + (f" for backbone {backbone}" if backbone else ""))
     return runs[-1]
 
 

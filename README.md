@@ -53,7 +53,7 @@ Jednostki ukryte SAE (w opisie zadania „latenty”) nazywamy w projekcie i w k
    uv run --extra cu128 python -m concept_learning.scripts.train_sae --config configs/cub.json --activation-dir outputs/activations/<RUN>
    ```
 
-   Domyślny współczynnik L1 (`sae_l1_coefficient`) pochodzi z artykułu i był dobrany pod embeddingi modelu autorów. Dla własnego klasyfikatora warto najpierw przejrzeć kilka wartości (`sae_l1_sweep`, albo `--l1 0.002 0.004 ...`) i wpisać do configu tę, która daje rzadkość bliską artykułowi (L0 ≈ 7,66) bez dużego spadku recovered loss / accuracy:
+   Domyślny współczynnik L1 (`sae_l1_coefficient = 0.008`) jest dobrany przeglądem pod własny ResNet-18, którego embeddingi mają ok. 2,3× większą normę niż u modelu autorów. Dla modelu autorów artykuł używa `0.002`. Po zmianie klasyfikatora warto najpierw przejrzeć kilka wartości (`sae_l1_sweep`, albo `--l1 0.002 0.004 ...`) i wpisać do configu tę, która daje rzadkość bliską artykułowi (L0 ≈ 7,66) bez dużego spadku recovered loss / accuracy:
 
    ```bash
    uv run --extra cu128 python -m concept_learning.scripts.sweep_sae --config configs/cub.json --activation-dir outputs/activations/<RUN>
