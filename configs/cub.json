@@ -1,0 +1,23 @@
+{
+    "val_split": 0.1,
+    "seed": 42,
+    "num_workers": 4,
+
+    "clf_imagenet_init": true,
+    "clf_epochs": 40,
+    "clf_batch_size": 64,
+    "clf_lr": 0.01,
+    "clf_head_lr": 0.1,
+    "clf_momentum": 0.9,
+    "clf_weight_decay": 0.0001,
+
+    "sae_expansion_factor": 1,
+    "sae_l1_coefficient": 0.008,
+    "sae_l1_sweep": [0.0005, 0.001, 0.002, 0.004, 0.008, 0.016],
+    "sae_learning_rate": 0.0001,
+    "sae_batch_size": 32,
+    "sae_epochs": 1000,
+    "sae_patience": 50,
+    "sae_ce_drop_tolerance": 0.005,
+    "sae_min_active_images": 25
+}
